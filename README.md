@@ -1,0 +1,2 @@
+# MapgicPillAdmin
+Magic Pill Admin
