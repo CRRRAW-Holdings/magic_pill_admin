@@ -51,8 +51,7 @@ function Employee() {
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [isEditEmployeeDialogOpen, setIsEditEmployeeDialogOpen] = useState(false);
 
-  console.log(companyId, 'companyID');
-  console.log(csvData, sessionId);
+  console.log(companyId, 'companyid', csvData, sessionId);
   console.log(selectedEmployee,'selected');
 
   useEffect(() => {

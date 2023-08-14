@@ -26,8 +26,8 @@ export const addEmployeeThunk = createAsyncThunk(
   async ({ companyId, employeeData }) => {
     const transformedData = {
       ...employeeData,
-      insurance_company_id: parseInt(employeeData.insurance_company_id, 10),
-      magic_pill_plan_id: parseInt(employeeData.magic_pill_plan_id, 10)
+      insurance_company_id: employeeData.insurance_company_id,
+      magic_pill_plan_id: employeeData.magic_pill_plan_id,
     };
 
     const response = await addEmployeeToCompany(companyId, transformedData);
@@ -40,11 +40,14 @@ export const addEmployeeThunk = createAsyncThunk(
 // Async thunk to update an employee
 export const updateEmployeeThunk = createAsyncThunk(
   'employee/updateEmployee',
-  async (employee) => {
-    const response = await updateEmployeeDetails(employee);
+  async ({ companyId, employeeData }) => {
+    console.log(companyId, employeeData, 'thunk');
+    // use companyId and employeeData as needed
+    const response = await updateEmployeeDetails(employeeData);
     return response.data;
   }
 );
+
 
 export const toggleEmployeeStatusThunk = createAsyncThunk(
   'employee/toggleEmployeeStatus',
