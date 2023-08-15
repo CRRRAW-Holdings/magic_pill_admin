@@ -8,6 +8,10 @@ import {
   setProcessedCsvData,
 } from '../slices/employeeSlice';
 import { processFile } from '../utils/csvUtil';
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
+
 
 import {
   TableBody,
@@ -29,7 +33,8 @@ import {
   EditButton,
   DisableButton,
   EnableButton,
-  LockedTooltip
+  LockedTooltip,
+  StyledSearchBar,
 } from '../styles/styledComponents';
 
 import AddEmployeeDialog from './AddEmployeeDialog';
@@ -46,72 +51,86 @@ function Employee() {
   const companyName = useSelector((state) => state.employee.companyName);
   const selectedEmployee = useSelector((state) => state.employee.selectedEmployee);
   // const [isUploadSuccessful, setIsUploadSuccessful] = useState(false);
-  const hasError = useSelector((state) => state.employee?.hasError);
-  const errorMessage = useSelector((state) => state.employee?.errorMessage);
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [isEditEmployeeDialogOpen, setIsEditEmployeeDialogOpen] = useState(false);
-  const [isComparisonDialogOpen, setIsComparisonDialogOpen] = useState(false);  // State for controlling the ComparisonDialog open/close
-  const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [isComparisonDialogOpen, setIsComparisonDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
+  console.log(searchQuery);
   const processedCsvData = useSelector((state) => state.employee.processedCsvData) || [];
-
-  console.log(selectedEmployee,'selectedEmployee',processedCsvData);
   useEffect(() => {
     dispatch(fetchEmployees(companyId));
   }, [companyId, dispatch]);
 
   const fileRef = useRef(null);
 
+  const filteredEmployees = employees.filter(employee => {
+    const searchTerm = searchQuery.toLowerCase();
+    return (
+      employee.username.toLowerCase().includes(searchTerm) ||
+      employee.email.toLowerCase().includes(searchTerm)
+    );
+  });
+
+  const handleSearch = (value) => {
+    setSearchQuery(value);
+  };
+
   const editEmployee = (employee) => {
-    console.log(employee);
     dispatch(selectEmployee(employee));
     setIsEditEmployeeDialogOpen(true);
   };
 
   const toggleEmployeeStatus = (employee) => {
-    dispatch(selectEmployee(employee));
-    dispatch(toggleEmployeeStatusThunk(employee.user_id));
-  };
-
+    dispatch(toggleEmployeeStatusThunk(employee.user_id))
+      .then((value) => {
+        console.log(value.payload,'val');
+        toast.success('Employee toggle successful');
+      })
+      .catch(() => {
+        toast.error('Failed to toggle employee status!');
+      });
+  };  
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-  
     processFile(
       file,
       employees,
       (comparedData) => {
-        console.log(comparedData);
         dispatch(setProcessedCsvData(comparedData));
+        toast.success('CSV processed successfully!');
         setIsComparisonDialogOpen(true);
       },
       (error) => {
+        toast.error('Error processing CSV!');
         console.error(error);
-        // Handle the error, e.g., set error state or display a notification.
       }
     );
-  };
-
-
+  };  
 
   return (
     <StyledPaper>
-      <CompanyName>Employee Management</CompanyName>
-      <ActualCompanyName>{companyName}</ActualCompanyName>
-      {updateSuccess && (
-        <div style={{ color: 'green', textAlign: 'center', marginBottom: '10px' }}>
-          Employee updated successfully!
-        </div>
-      )}
-      {hasError && (
-        <div style={{ color: 'red', textAlign: 'center', marginBottom: '10px' }}>
-          {errorMessage}
-        </div>
-      )}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      <div style={{ textAlign: 'center' }}>
+        <CompanyName>{companyName}</CompanyName>
+        <ActualCompanyName>Employee Management</ActualCompanyName>
+      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <AddEmployeeButton variant="contained" onClick={() => setIsAddEmployeeDialogOpen(true)}>
           Add Employee
         </AddEmployeeButton>
+        <StyledSearchBar onChange={(e) => handleSearch(e.target.value)} />
         <input type="file" ref={fileRef} style={{ display: 'none' }} onChange={handleFileChange} />
         <UploadCSVButton variant="contained" onClick={() => fileRef.current.click()}>
           Upload Company CSV
@@ -123,11 +142,13 @@ function Employee() {
             <TableRow>
               <HeaderCell>Username</HeaderCell>
               <HeaderCell>Email</HeaderCell>
+              <HeaderCell>Company Name</HeaderCell>
+              <HeaderCell>Plan ID</HeaderCell>
               <HeaderCell>Actions</HeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {employees.map((employee) => (
+            {filteredEmployees.map((employee) => (
               <EmployeeRow key={employee.user_id} isActive={employee.is_active}>
                 <StyledTableCell>
                   {employee.is_active ? (
@@ -141,6 +162,8 @@ function Employee() {
                     </LockedTooltip>
                   )}
                 </StyledTableCell>
+                <StyledTableCell>{employee.email}</StyledTableCell>
+                <StyledTableCell>{employee.magic_pill_plan_id}</StyledTableCell>
                 <StyledTableCell>{employee.email}</StyledTableCell>
                 <StyledTableCell>
                   <EditButton variant="contained" onClick={() => editEmployee(employee)}>Edit</EditButton>
@@ -156,8 +179,8 @@ function Employee() {
         </StyledTable>
       </StyledTableContainer>
       <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} />
-      {selectedEmployee &&<EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={() => setIsEditEmployeeDialogOpen(false)} companyId={companyId} employee={selectedEmployee} setUpdateSuccess={setUpdateSuccess} />}
-      <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData}/>
+      {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={() => setIsEditEmployeeDialogOpen(false)} companyId={companyId} employee={selectedEmployee} />}
+      <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData} />
     </StyledPaper>
   );
 }

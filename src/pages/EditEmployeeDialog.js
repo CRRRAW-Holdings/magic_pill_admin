@@ -9,7 +9,7 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import PropTypes from 'prop-types';
 
-function EditEmployeeDialog({ open, onClose, employee, companyId, setUpdateSuccess }) {
+function EditEmployeeDialog({ open, onClose, employee, companyId }) {
   console.log(employee, companyId);
   const dispatch = useDispatch();
   const [employeeData, setEmployeeData] = useState({
@@ -37,10 +37,8 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, setUpdateSucce
       .then(action => {
         if (updateEmployeeThunk.fulfilled.match(action)) {
         //   dispatch(fetchEmployees(companyId));
-          setUpdateSuccess(true);
           onClose();
         } else if (updateEmployeeThunk.rejected.match(action)) {
-          setUpdateSuccess(false);
           console.error('Error updating employee:', action.error);
         }
       }).catch(() => {

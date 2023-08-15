@@ -118,6 +118,7 @@ const employeeSlice = createSlice({
     toggleEmployeeStatus: (state, action) => {
       const userId = action.payload;
       const employeeIndex = state.employees.findIndex(emp => emp.user_id === userId);
+      state.selectedEmployee = state.employees[employeeIndex];
 
       if (employeeIndex !== -1) {
         state.employees[employeeIndex].is_active = !state.employees[employeeIndex].is_active;

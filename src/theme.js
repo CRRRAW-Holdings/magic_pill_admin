@@ -3,6 +3,10 @@ import Background from './assets/images/background.png';
 
 const theme = createTheme({
   palette: {
+    baseWhite: {
+      main: '#FFFFFF',
+      contrastText: '#000000', // Assuming black text will be contrasted on a white background
+    },
     primary: {
       main: '#390072',
       light: '#5e2394',
@@ -40,7 +44,7 @@ const theme = createTheme({
       contrastText: '#ffffff',
     },
     grey: {
-      main: '#9e9e9e',
+      main: '#c2c2c2',
       light: '#bdbdbd',
       dark: '#616161',
       contrastText: '#000',
