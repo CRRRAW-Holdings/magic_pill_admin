@@ -87,35 +87,47 @@ const transformTempEmployee = (tempEmployee) => {
 };
 
 const compareFileWithCurrentData = (fileContent, employees) => {
-  console.log(fileContent, 'fileContent');
   let results = [];
-
   let tempEmployees = [...employees]; 
 
   // Ignore the first two entries in the fileContent
   for (let index = 2; index < fileContent.length; index++) {
     const fileEmployee = fileContent[index];
-    const transformedEmployee = transformFileEmployee(fileEmployee);
+    const transformedEmployee = transformFileEmployee(fileEmployee); // assuming this function exists
 
     const match = tempEmployees.find(emp => emp.username === transformedEmployee.username);
 
     if (match) {
       if (JSON.stringify(match) !== JSON.stringify(transformedEmployee)) {
-        results.push({ ...transformedEmployee, action: 'update' });
+        results.push({
+          action: 'update',
+          oldData: match,
+          newData: transformedEmployee
+        });
       }
       // Remove the matched employee so they won't be marked as 'disable'
       tempEmployees = tempEmployees.filter(emp => emp.username !== transformedEmployee.username);
     } else {
-      results.push({ ...transformedEmployee, action: 'add' });
+      results.push({
+        action: 'add',
+        oldData: null,
+        newData: transformedEmployee
+      });
     }
   }
 
   tempEmployees.forEach(employee => {
-    const transformedTempEmployee = transformTempEmployee(employee);
-    results.push({ ...transformedTempEmployee, action: 'disable' });
+    // If you need to transform old stored employee data, use this:
+    const transformedTempEmployee = transformTempEmployee(employee); 
+    // Otherwise, you can just use "employee"
+    
+    results.push({
+      action: 'disable',
+      oldData: transformedTempEmployee,
+      newData: null
+    });
   });
 
-  console.log(results, 'RESULTS');
   return results;
 };
 
