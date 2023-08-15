@@ -5,9 +5,9 @@ import {
   fetchEmployees,
   selectEmployee,
   toggleEmployeeStatusThunk,
-  uploadCSVThunk,
+  setProcessedCsvData,
 } from '../slices/employeeSlice';
-import { isValidFileType, isValidFileSize, readFileContent } from '../utils/csvUtil';
+import { processFile } from '../utils/csvUtil';
 
 import {
   TableBody,
@@ -34,6 +34,8 @@ import {
 
 import AddEmployeeDialog from './AddEmployeeDialog';
 import EditEmployeeDialog from './EditEmployeeDialog';
+import ComparisonDialog from './ComparisonDialog';
+
 
 const defaultEmployees = [];
 
@@ -43,17 +45,17 @@ function Employee() {
   const employees = useSelector((state) => state.employee?.employees || defaultEmployees);
   const companyName = useSelector((state) => state.employee.companyName);
   const selectedEmployee = useSelector((state) => state.employee.selectedEmployee);
-  const [csvData, setCsvData] = useState(null);
-  const [sessionId, setSessionId] = useState(null);
-  const [csvUploadSuccess, setCsvUploadSuccess] = useState(false);
+  // const [isUploadSuccessful, setIsUploadSuccessful] = useState(false);
   const hasError = useSelector((state) => state.employee?.hasError);
   const errorMessage = useSelector((state) => state.employee?.errorMessage);
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [isEditEmployeeDialogOpen, setIsEditEmployeeDialogOpen] = useState(false);
+  const [isComparisonDialogOpen, setIsComparisonDialogOpen] = useState(false);  // State for controlling the ComparisonDialog open/close
+  const [updateSuccess, setUpdateSuccess] = useState(false);
 
-  console.log(companyId, 'companyid', csvData, sessionId);
-  console.log(selectedEmployee,'selected');
+  const processedCsvData = useSelector((state) => state.employee.processedCsvData) || [];
 
+  console.log(selectedEmployee,'selectedEmployee',processedCsvData);
   useEffect(() => {
     dispatch(fetchEmployees(companyId));
   }, [companyId, dispatch]);
@@ -61,65 +63,34 @@ function Employee() {
   const fileRef = useRef(null);
 
   const editEmployee = (employee) => {
+    console.log(employee);
     dispatch(selectEmployee(employee));
     setIsEditEmployeeDialogOpen(true);
   };
 
-
-  const toggleEmployeeStatus = (employeeId) => {
-    dispatch(toggleEmployeeStatusThunk(employeeId));
+  const toggleEmployeeStatus = (employee) => {
+    dispatch(selectEmployee(employee));
+    dispatch(toggleEmployeeStatusThunk(employee.user_id));
   };
+
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-
-    // Use the utilities to validate the file
-    if (isValidFileType(file.name) && isValidFileSize(file.size)) {
-      readFileContent(
-        file,
-        (content) => {
-          // Store the raw CSV content
-          setCsvData(content);
-
-          // Dispatch the thunk action to upload the CSV data
-          dispatch(uploadCSVThunk(content))
-            .then((action) => {
-              if (action.type === 'employee/uploadCSV/fulfilled') {
-                // Update the state to indicate success
-                setCsvUploadSuccess(true);
-
-                // If the server returns a session ID or some unique identifier, 
-                // store it in the state
-                if (action.payload.sessionId) {
-                  setSessionId(action.payload.sessionId);
-                }
-              } else {
-                // Reset csvData and sessionId since upload failed
-                setCsvData(null);
-                setSessionId(null);
-                setCsvUploadSuccess(false);
-              }
-            });
-        },
-        (error) => {
-          console.error(error);
-          // Reset the state in case of an error reading the file
-          setCsvData(null);
-          setSessionId(null);
-          setCsvUploadSuccess(false);
-        }
-      );
-    } else {
-      // This is when the file is not a valid CSV or exceeds the size limit
-      console.error('Invalid file type or size.');
-      // Reset the state in case of a file validation error
-      setCsvData(null);
-      setSessionId(null);
-      setCsvUploadSuccess(false);
-    }
+  
+    processFile(
+      file,
+      employees,
+      (comparedData) => {
+        console.log(comparedData);
+        dispatch(setProcessedCsvData(comparedData));
+        setIsComparisonDialogOpen(true);
+      },
+      (error) => {
+        console.error(error);
+        // Handle the error, e.g., set error state or display a notification.
+      }
+    );
   };
-
-
 
 
 
@@ -127,9 +98,9 @@ function Employee() {
     <StyledPaper>
       <CompanyName>Employee Management</CompanyName>
       <ActualCompanyName>{companyName}</ActualCompanyName>
-      {csvUploadSuccess && (
+      {updateSuccess && (
         <div style={{ color: 'green', textAlign: 'center', marginBottom: '10px' }}>
-          CSV uploaded successfully!
+          Employee updated successfully!
         </div>
       )}
       {hasError && (
@@ -174,9 +145,9 @@ function Employee() {
                 <StyledTableCell>
                   <EditButton variant="contained" onClick={() => editEmployee(employee)}>Edit</EditButton>
                   {employee.is_active ? (
-                    <DisableButton variant="contained" onClick={() => toggleEmployeeStatus(employee.user_id)}>Disable</DisableButton>
+                    <DisableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Disable</DisableButton>
                   ) : (
-                    <EnableButton variant="contained" onClick={() => toggleEmployeeStatus(employee.user_id)}>Enable</EnableButton>
+                    <EnableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Enable</EnableButton>
                   )}
                 </StyledTableCell>
               </EmployeeRow>
@@ -185,7 +156,8 @@ function Employee() {
         </StyledTable>
       </StyledTableContainer>
       <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} />
-      <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={() => setIsEditEmployeeDialogOpen(false)} companyId={companyId} employee={selectedEmployee}/>
+      {selectedEmployee &&<EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={() => setIsEditEmployeeDialogOpen(false)} companyId={companyId} employee={selectedEmployee} setUpdateSuccess={setUpdateSuccess} />}
+      <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData}/>
     </StyledPaper>
   );
 }

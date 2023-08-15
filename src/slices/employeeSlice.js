@@ -31,7 +31,7 @@ export const addEmployeeThunk = createAsyncThunk(
     };
 
     const response = await addEmployeeToCompany(companyId, transformedData);
-    console.log(response);
+    console.log(response, 'ADD');
     return transformedData;
   }
 );
@@ -78,6 +78,20 @@ export const uploadCSVThunk = createAsyncThunk(
   }
 );
 
+// In your employeeSlice.js or where you keep your thunks
+
+export const previewCSVThunk = createAsyncThunk(
+  'employee/previewCSV',
+  async (csvData, { dispatch, getState }) => {
+    try {
+      return csvData;  // If you want to keep this in the state.
+    } catch (error) {
+      return Promise.reject(error.message);
+    }
+  }
+);
+
+
 
 
 
@@ -89,8 +103,10 @@ const employeeSlice = createSlice({
     uploadProgress: {
       isLoading: false,  // A boolean flag to know if something is uploading.
       percentage: 0,    // The upload progress as a percentage.
-      message: ''       // Useful for displaying specific messages to the user.
+      message: '',
     },
+    processedCsvData: [],
+    isComparisonDialogOpen: false,      // Useful for displaying specific messages to the user.
     companyName: null,
     employees: [],
     loading: false,
@@ -120,6 +136,10 @@ const employeeSlice = createSlice({
     updateUploadProgress: (state, action) => {
       state.uploadProgress.percentage = action.payload;
       state.uploadProgress.message = `Uploading... ${action.payload}%`;
+    },
+    setProcessedCsvData: (state, action) => {
+      console.log(state, action,'CONSOLEEE');
+      state.processedCsvData = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -164,6 +184,7 @@ const employeeSlice = createSlice({
           state.employees[index] = action.payload;
         }
       })
+
       .addCase(updateEmployeeThunk.rejected, (state, action) => {
         state.hasError = true;
         state.errorMessage = action.payload || 'There was an issue updating the employee details. Please try again later.';
@@ -210,4 +231,4 @@ const employeeSlice = createSlice({
 
 
 export default employeeSlice.reducer;
-export const { selectEmployee, deselectEmployee, clearEmployeeError, updateUploadProgress } = employeeSlice.actions;
+export const { selectEmployee, deselectEmployee, clearEmployeeError, updateUploadProgress, setProcessedCsvData } = employeeSlice.actions;

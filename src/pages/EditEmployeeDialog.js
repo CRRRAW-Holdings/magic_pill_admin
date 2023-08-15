@@ -9,8 +9,8 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import PropTypes from 'prop-types';
 
-function EditEmployeeDialog({ open, onClose, employee, companyId }) {
-  console.log(employee,companyId );
+function EditEmployeeDialog({ open, onClose, employee, companyId, setUpdateSuccess }) {
+  console.log(employee, companyId);
   const dispatch = useDispatch();
   const [employeeData, setEmployeeData] = useState({
     username: '',
@@ -36,8 +36,11 @@ function EditEmployeeDialog({ open, onClose, employee, companyId }) {
     dispatch(updateEmployeeThunk({ companyId, employeeData }))
       .then(action => {
         if (updateEmployeeThunk.fulfilled.match(action)) {
+        //   dispatch(fetchEmployees(companyId));
+          setUpdateSuccess(true);
           onClose();
         } else if (updateEmployeeThunk.rejected.match(action)) {
+          setUpdateSuccess(false);
           console.error('Error updating employee:', action.error);
         }
       }).catch(() => {
@@ -89,10 +92,10 @@ function EditEmployeeDialog({ open, onClose, employee, companyId }) {
       </DialogContent>
       < DialogActions >
         <Button onClick={onClose} color="primary" >
-                        Cancel
+                    Cancel
         </Button>
         < Button onClick={handleSubmit} color="primary" >
-                            Update
+                    Update
         </Button>
       </DialogActions>
     </Dialog>
@@ -103,7 +106,8 @@ EditEmployeeDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   employee: PropTypes.object.isRequired,
   companyId: PropTypes.string.isRequired,
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
+  setUpdateSuccess: PropTypes.func.isRequired,
 };
 
 export default EditEmployeeDialog;
