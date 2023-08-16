@@ -36,7 +36,7 @@ export const loginUser = (username, password) => {
 
 // Company
 export const fetchCompaniesFromApi = () => {
-  return instance.get('/home');
+  return instance.get('/company');
 };
 
 export const uploadCSVData = (csvData, onProgress) => {

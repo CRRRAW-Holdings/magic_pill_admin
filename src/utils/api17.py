@@ -1,3 +1,4 @@
+# Import necessary libraries and modules
 import os
 import configparser
 import hashlib
@@ -9,10 +10,14 @@ from flask_cors import CORS
 from models import InsuranceCompany, User, MagicPillPlan
 from process_data import process_user_data, process_drug_data
 
+# Initialize the Flask application
 app = Flask(__name__)
+# Set up CORS to allow requests from the specified origin
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+# Disable CSRF protection for simplicity (in production, consider enabling and managing it properly)
 app.config['WTF_CSRF_ENABLED'] = False
 
+# Read the configuration details from config.ini
 config = configparser.ConfigParser()
 config.read("config.ini")
 db_host = config["database"]["host"]
@@ -24,21 +29,27 @@ db_password = config["database"]["password"]
 upload_folder = config["DEFAULT"]["uploads"]
 changelog_folder = config["DEFAULT"]["changelog"]
 
+# Construct the database URL
 db_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 engine = create_engine(db_url, pool_pre_ping=True)
 session_factory = sessionmaker(bind=engine)
+# Scoped sessions ensure thread-safety
 Session = scoped_session(session_factory)
 
+# Define allowed file extensions for uploads
 ALLOWED_EXTENSIONS = {'csv', 'xlsx'}
 app.config['UPLOAD_FOLDER'] = upload_folder
+# Secret key for Flask session management
 app.secret_key = "super secret key"
 
-# Define a temporary storage dictionary for processing uploads
+# A dictionary for storing temporary data
 temporary_storage = {}
 
+# Check if the file has an allowed extension
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# Teardown and clean up the session after each request
 @app.teardown_appcontext
 def cleanup(resp_or_exc):
     Session.remove()
@@ -56,10 +67,11 @@ def not_found_error(e):
 def internal_server_error(e):
     return jsonify(error="Internal Server Error", message=str(e)), 500
 
-
+# Route for file upload
 @app.route('/upload', methods=['POST'])
 def upload_file():
     file = request.files.get('file')
+    # Check if the uploaded file is valid
     if not file or not allowed_file(file.filename):
         return jsonify(results=[{"error": "Bad Request", "message": "No valid file provided."}]), 400
     filename = secure_filename(file.filename)
@@ -73,6 +85,7 @@ def upload_file():
         return jsonify(results=[{"error": "Bad Request", "message": "Invalid data type."}]), 400
     return jsonify(results=[{"success": True}])
 
+# Route for user login/authentication
 @app.route("/", methods=["POST"])
 def landing():
     data = request.get_json()
@@ -85,11 +98,13 @@ def landing():
     else:
         return jsonify(results=[{"success": False, "message": "Invalid credentials"}]), 401
 
-@app.route("/home", methods=["GET"])
-def home():
+# Route to fetch all insurance companies
+@app.route("/company", methods=["GET"])
+def company():
     insurance_companies = Session.query(InsuranceCompany).all()
     return jsonify(results=[company.serialize() for company in insurance_companies])
 
+# Route to fetch a specific insurance company and its users
 @app.route("/company/<company_id>", methods=["GET"])
 def company(company_id):
     insurance_company = Session.query(InsuranceCompany).get(company_id)
@@ -99,7 +114,7 @@ def company(company_id):
     return jsonify(results=[
         {
             "company": insurance_company.serialize(),
-            "users": [user.serialize_full() for user in users]  # Serialize with all attributes
+            "users": [user.serialize_full() for user in users]
         }
     ])
 
