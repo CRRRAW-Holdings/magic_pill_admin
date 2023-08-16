@@ -83,6 +83,9 @@ export const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   border: `1px solid ${theme.palette.grey.main}`,  // Table border
   borderRadius: '4px',  // Optional: small border radius for softness
   backgroundColor: '#ffffff',  // Setting table's direct background to white (or any color you prefer)
+  maxHeight: '90%',
+  height: '600px',
+  overflowY: 'auto',
 }));
 
 // DisableButton styled component
@@ -142,6 +145,10 @@ export const HeaderCell = styled(TableCell)(({ theme }) => ({
   fontWeight: 'bold',
   color: theme.palette.text.primary,
   borderBottom: '2px solid ' + theme.palette.divider,
+  position: 'sticky',
+  top: 0,
+  zIndex: 1,  // Optional: to ensure header stays on top
+  background: '#fff'
 }));
 
 export const UploadCSVButton = styled(Button)(({ theme }) => ({

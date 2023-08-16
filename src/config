@@ -1,0 +1,18 @@
+[database]
+host = magicpill-db.cjexjwocpkio.ap-northeast-2.rds.amazonaws.com
+port = 5432
+database = magicpill
+username = MagicPill
+password = MagicP!ll123
+
+[DEFAULT]
+uploads = C:\Temp\magic-pill-admin-portal\Uploads
+pending = C:\Temp\magic-pill-admin-portal\Uploads\pending
+changelog = C:\Temp\magic-pill-admin-portal\Changelog
+
+[email]
+server = YOUR_SMTP_SERVER
+port = YOUR_SMTP_PORT
+user = YOUR_EMAIL_ADDRESS
+password = YOUR_EMAIL_PASSWORD
+from_email = YOUR_FROM_EMAIL_ADDRESS
