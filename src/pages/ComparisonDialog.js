@@ -4,32 +4,21 @@ import { useDispatch } from 'react-redux';
 import { uploadCSVThunk } from '../slices/employeeSlice';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Typography, Table, TableHead, TableBody, TableRow, TableCell,
+  Button, Typography, Table, TableHead, TableBody, TableCell,
   Tabs, Tab, Card, CardContent
 } from '@mui/material';
 import Checkbox from '@mui/material/Checkbox';
-import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
 import {
   IconTableCell,
   HeaderTableRow,
-  StyledCheckbox
+  StyledCheckbox,
+  StyledTableRow
 } from '../styles/styledComponents';
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:hover': {
-    backgroundColor: theme.palette.success.main,
-    borderRadius: '5px',
-  },
-  '&:active': {
-    backgroundColor: theme.palette.success.dark,
-    borderRadius: '5px',
-  },
-  backgroundColor: theme.palette.success.light,
-  borderRadius: '5px'
-}));
+import theme from '../theme';
 
 const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
   const dispatch = useDispatch();
@@ -77,7 +66,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
 
   const handleSelectAll = () => {
     const dataList = dataMap[selectedTab];
-    const usernames = dataList.map(user => user.action === 'update' ? user.newData.username : user.oldData.username);
+    const usernames = dataList.map(user => user.newData ? user.newData.username : user.oldData.username);
     if (usernames.every(username => checkedItems.includes(username))) {
       setCheckedItems(prevState => prevState.filter(username => !usernames.includes(username)));
     } else {
@@ -85,15 +74,36 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
     }
   };
 
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
       <DialogTitle>Data Changes Review</DialogTitle>
       <DialogContent>
         <Tabs value={selectedTab} onChange={handleChange} indicatorColor="primary" textColor="primary">
-          <Tab label="Added" />
-          <Tab label="Edited" />
-          <Tab label="Disabled" />
+          <Tab
+            label="Added"
+            style={{
+              backgroundColor: selectedTab === 0 ? theme.palette.primary.main : 'transparent',
+              color: selectedTab === 0 ? 'white' : theme.palette.success.dark
+            }}
+          />
+          <Tab
+            label="Edited"
+            style={{
+              backgroundColor: selectedTab === 1 ? theme.palette.primary.main : 'transparent',
+              color: selectedTab === 1 ? 'white' : 'orange'
+            }}
+          />
+          <Tab
+            label="Disabled"
+            style={{
+              backgroundColor: selectedTab === 2 ? theme.palette.primary.main : 'transparent',
+              color: selectedTab === 2 ? 'white' : theme.palette.error.dark
+            }}
+          />
         </Tabs>
+
+
 
         {selectedTab === 0 && (
           <Card style={{ marginTop: '20px' }}>
@@ -102,7 +112,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
               <Table>
                 <TableHead>
                   <HeaderTableRow>
-                    <IconTableCell><StyledCheckbox checked={allRowsChecked} onChange={() => handleSelectAll(added)} /></IconTableCell>
+                    <IconTableCell><StyledCheckbox checked={allRowsChecked} onChange={handleSelectAll} /></IconTableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Username</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Email</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Magic Pill Plan ID</TableCell>
@@ -111,7 +121,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
                 </TableHead>
                 <TableBody>
                   {added.map((user, index) => (
-                    <StyledTableRow key={index}>
+                    <StyledTableRow key={index} rowType="add">
                       <IconTableCell><AddIcon color="primary" /></IconTableCell>
                       <TableCell>
                         <Checkbox
@@ -131,45 +141,50 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
             </CardContent>
           </Card>
         )}
-
         {selectedTab === 1 && (
           <Card style={{ marginTop: '20px' }}>
             <CardContent>
               <Typography variant="h6">Edited Users</Typography>
               <Table>
                 <TableHead>
-                  <TableRow>
-                    <Checkbox checked={allRowsChecked} onChange={() => handleSelectAll(edited)} />
-                    <TableCell style={{ fontWeight: 'bold' }}>Action</TableCell>
-                    <TableCell style={{ fontWeight: 'bold' }}>Old User Info</TableCell>
-                    <TableCell style={{ fontWeight: 'bold' }}>Edited User Info</TableCell>
-                  </TableRow>
+                  <HeaderTableRow>
+                    <IconTableCell><StyledCheckbox checked={allRowsChecked} onChange={handleSelectAll} /></IconTableCell>
+                    <TableCell style={{ fontWeight: 'bold' }}>Username</TableCell>
+                    <TableCell style={{ fontWeight: 'bold' }}>Email</TableCell>
+                    <TableCell style={{ fontWeight: 'bold' }}>Magic Pill Plan ID</TableCell>
+                    <TableCell style={{ fontWeight: 'bold' }}>Insurance Company ID</TableCell>
+                  </HeaderTableRow>
                 </TableHead>
                 <TableBody>
                   {edited.map((user, index) => (
-                    <React.Fragment key={index}>
-                      <TableRow hover style={{ backgroundColor: '#FFEAB5', margin: '5px 0', borderRadius: '5px' }}>
-                        <TableCell>
-                          <Checkbox
-                            checked={checkedItems.includes(user.newData.username)}
-                            onChange={() => handleCheckboxChange(user.newData.username)}
-                          />
-
-                        </TableCell>
-                        <TableCell>{user.oldData.username}<br />
-                          {user.oldData.magic_pill_plan_id}<br />
-                          {user.oldData.insurance_company_id}<br />
-                          {user.oldData.email}
-                        </TableCell>
-                        <TableCell>{user.newData.username}<br />
-                          {user.newData.magic_pill_plan_id}<br />
-                          {user.newData.insurance_company_id}<br />
-                          {user.newData.email}
-                        </TableCell>
-                        <TableCell rowSpan={2}><EditIcon /></TableCell>
-                      </TableRow>
-                    </React.Fragment>
+                    <StyledTableRow key={index} rowType="edit">
+                      <IconTableCell><EditIcon color="primary" /></IconTableCell>
+                      <TableCell>
+                        <span style={{ color: theme.palette.error.dark }}>{user.oldData.username}</span>
+                        <ArrowForwardIcon color="action" style={{ verticalAlign: 'middle' }} />
+                        <span style={{ color: theme.palette.success.dark }}>{user.newData.username}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span style={{ color: theme.palette.error.dark }}>{user.oldData.email}</span>
+                        <ArrowForwardIcon color="action" style={{ verticalAlign: 'middle' }} />
+                        <span style={{ color: theme.palette.success.dark }}>{user.newData.email}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span style={{ color: theme.palette.error.dark }}>{user.oldData.magic_pill_plan_id}</span>
+                        <ArrowForwardIcon color="action" style={{ verticalAlign: 'middle' }} />
+                        <span style={{ color: theme.palette.success.dark }}>{user.newData.magic_pill_plan_id}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span style={{ color: theme.palette.error.dark }}>{user.oldData.insurance_company_id}</span>
+                        <ArrowForwardIcon color="action" style={{ verticalAlign: 'middle' }} />
+                        <span style={{ color: theme.palette.success.dark }}>{user.newData.insurance_company_id}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Checkbox checked={checkedItems.includes(user.newData.username)} onChange={() => handleCheckboxChange(user.newData.username)} />
+                      </TableCell>
+                    </StyledTableRow>
                   ))}
+
                 </TableBody>
               </Table>
             </CardContent>
@@ -182,31 +197,29 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
               <Typography variant="h6">Disabled Users</Typography>
               <Table>
                 <TableHead>
-                  <TableRow>
-                    <TableCell style={{ fontWeight: 'bold' }}><Checkbox checked={allRowsChecked} onChange={() => handleSelectAll(added)} /></TableCell>
-                    <TableCell style={{ fontWeight: 'bold' }}>Action</TableCell>
+                  <HeaderTableRow>
+                    <IconTableCell><StyledCheckbox checked={allRowsChecked} onChange={handleSelectAll} /></IconTableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Username</TableCell>
+                    <TableCell style={{ fontWeight: 'bold' }}>Email</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Magic Pill Plan ID</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Insurance Company ID</TableCell>
-                    <TableCell style={{ fontWeight: 'bold' }}>Email</TableCell>
-                  </TableRow>
+                  </HeaderTableRow>
                 </TableHead>
                 <TableBody>
                   {disabled.map((user, index) => (
-                    <TableRow key={index} hover style={{ backgroundColor: '#fbeff0', margin: '5px 0', borderRadius: '5px' }}>
+                    <StyledTableRow key={index} rowType="disable">
+                      <IconTableCell><PersonOffIcon color="error" /></IconTableCell>
+                      <TableCell>{user.oldData.username}</TableCell>
+                      <TableCell>{user.oldData.email}</TableCell>
+                      <TableCell>{user.oldData.magic_pill_plan_id}</TableCell>
+                      <TableCell>{user.oldData.insurance_company_id}</TableCell>
                       <TableCell>
                         <Checkbox
                           checked={checkedItems.includes(user.oldData.username)}
                           onChange={() => handleCheckboxChange(user.oldData.username)}
                         />
-
                       </TableCell>
-                      <TableCell>{user.oldData.username}</TableCell>
-                      <TableCell>{user.oldData.magic_pill_plan_id}</TableCell>
-                      <TableCell>{user.oldData.insurance_company_id}</TableCell>
-                      <TableCell>{user.oldData.email}</TableCell>
-                      <TableCell><PersonOffIcon color="error" /></TableCell>
-                    </TableRow>
+                    </StyledTableRow>
                   ))}
                 </TableBody>
               </Table>

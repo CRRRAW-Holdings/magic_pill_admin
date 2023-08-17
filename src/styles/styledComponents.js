@@ -89,6 +89,51 @@ export const AddEmployeeButton = styled(Button)(({ theme }) => ({
   },
 }));
 
+export const StyledTableRow = styled(TableRow)(({ theme, rowType }) => {
+  switch (rowType) {
+  case 'add':
+    return {
+      '&:hover': {
+        backgroundColor: theme.palette.success.main,
+        borderRadius: '5px',
+      },
+      '&:active': {
+        backgroundColor: theme.palette.success.dark,
+        borderRadius: '5px',
+      },
+      backgroundColor: theme.palette.success.light,
+      borderRadius: '5px'
+    };
+  case 'edit':
+    return {
+      '&:hover': {
+        backgroundColor: theme.palette.warning.light,
+        borderRadius: '5px',
+      },
+      '&:active': {
+        backgroundColor: theme.palette.warning.light,
+        borderRadius: '5px',
+      },
+      backgroundColor: theme.palette.baseWhite.main,
+      borderRadius: '5px'
+    };
+  case 'disable':
+    return {
+      '&:hover': {
+        backgroundColor: theme.palette.error.main,
+        borderRadius: '5px',
+      },
+      '&:active': {
+        backgroundColor: theme.palette.error.dark,
+        borderRadius: '5px',
+      },
+      backgroundColor: theme.palette.error.light,
+      borderRadius: '5px'
+    };
+  default:
+    return {};
+  }
+});
 
 
 
