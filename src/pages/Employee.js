@@ -91,6 +91,11 @@ function Employee() {
         toast.error('Failed to toggle employee status!');
       });
   };  
+  const handleUserDialogClose = (updatedUser) => {
+    toast.success(`${updatedUser.username} was added successfully!`);
+    setIsEditEmployeeDialogOpen(false);
+  };
+  
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -179,7 +184,7 @@ function Employee() {
         </StyledTable>
       </StyledTableContainer>
       <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} />
-      {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={() => setIsEditEmployeeDialogOpen(false)} companyId={companyId} employee={selectedEmployee} />}
+      {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} />}
       <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData} />
     </StyledPaper>
   );

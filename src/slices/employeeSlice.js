@@ -41,10 +41,10 @@ export const addEmployeeThunk = createAsyncThunk(
 export const updateEmployeeThunk = createAsyncThunk(
   'employee/updateEmployee',
   async ({ companyId, employeeData }) => {
-    console.log(companyId, employeeData, 'thunk');
     // use companyId and employeeData as needed
     const response = await updateEmployeeDetails(employeeData);
-    return response.data;
+    console.log(response, 'thunk');
+    return response.data.results[0]?.user;
   }
 );
 
@@ -139,7 +139,7 @@ const employeeSlice = createSlice({
       state.uploadProgress.message = `Uploading... ${action.payload}%`;
     },
     setProcessedCsvData: (state, action) => {
-      console.log(state, action,'CONSOLEEE');
+      console.log(state, action, 'CONSOLEEE');
       state.processedCsvData = action.payload;
     },
   },
@@ -173,19 +173,19 @@ const employeeSlice = createSlice({
         state.hasError = true;
         state.errorMessage = action.payload || 'There was an issue adding the employee. Please try again later.';
       })
-
-      // updateEmployeeThunk
       .addCase(updateEmployeeThunk.pending, (state) => {
         state.hasError = false;
         state.errorMessage = '';
       })
       .addCase(updateEmployeeThunk.fulfilled, (state, action) => {
-        const index = state.employees.findIndex(e => e.employee_id === action.payload.employee_id);
+        const updatedUser = action.payload;
+        // Finding the index of the user to be updated.
+        const index = state.employees.findIndex(u => u.user_id === updatedUser.user_id);
         if (index !== -1) {
-          state.employees[index] = action.payload;
+          // Replacing the old user data with the updated data.
+          state.employees[index] = updatedUser;
         }
       })
-
       .addCase(updateEmployeeThunk.rejected, (state, action) => {
         state.hasError = true;
         state.errorMessage = action.payload || 'There was an issue updating the employee details. Please try again later.';

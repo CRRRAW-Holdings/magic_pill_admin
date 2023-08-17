@@ -7,16 +7,25 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import PropTypes from 'prop-types';
 
 function EditEmployeeDialog({ open, onClose, employee, companyId }) {
-  console.log(employee, companyId);
   const dispatch = useDispatch();
   const [employeeData, setEmployeeData] = useState({
     username: '',
     email: '',
     insurance_company_id: '',
-    magic_pill_plan_id: ''
+    magic_pill_plan_id: '',
+    is_active: true,
+    address: '',
+    dob: '',
+    age: '',
+    company: '',
+    first_name: '',
+    last_name: '',
+    phone: ''
   });
 
   useEffect(() => {
@@ -26,18 +35,21 @@ function EditEmployeeDialog({ open, onClose, employee, companyId }) {
   }, [employee]);
 
   const handleChange = (e) => {
-    setEmployeeData({
-      ...employeeData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setEmployeeData(prevState => ({ ...prevState, [name]: value }));
   };
+
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setEmployeeData(prevState => ({ ...prevState, [name]: checked }));
+  };
+  
 
   const handleSubmit = () => {
     dispatch(updateEmployeeThunk({ companyId, employeeData }))
       .then(action => {
         if (updateEmployeeThunk.fulfilled.match(action)) {
-        //   dispatch(fetchEmployees(companyId));
-          onClose();
+          onClose(action.payload);
         } else if (updateEmployeeThunk.rejected.match(action)) {
           console.error('Error updating employee:', action.error);
         }
@@ -48,8 +60,8 @@ function EditEmployeeDialog({ open, onClose, employee, companyId }) {
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Add Employee</DialogTitle>
-      < DialogContent >
+      <DialogTitle>Edit Employee</DialogTitle>
+      <DialogContent>
         <TextField
           autoFocus
           margin="dense"
@@ -68,6 +80,83 @@ function EditEmployeeDialog({ open, onClose, employee, companyId }) {
           fullWidth
           value={employeeData.email}
           onChange={handleChange}
+        />        <FormControlLabel
+          control={
+            <Checkbox
+              checked={employeeData.is_active}
+              onChange={handleCheckboxChange}
+              name="is_active"
+              color="primary"
+            />
+          }
+          label="Is Active"
+        />
+
+        <TextField
+          margin="dense"
+          name="address"
+          label="Address"
+          type="text"
+          fullWidth
+          value={employeeData.address}
+          onChange={handleChange}
+        />
+        <TextField
+          margin="dense"
+          name="dob"
+          label="Date of Birth"
+          type="date"
+          fullWidth
+          InputLabelProps={{
+            shrink: true,
+          }}
+          value={employeeData.dob}
+          onChange={handleChange}
+        />
+        <TextField
+          margin="dense"
+          name="age"
+          label="Age"
+          type="number"
+          fullWidth
+          value={employeeData.age}
+          onChange={handleChange}
+        />
+        <TextField
+          margin="dense"
+          name="company"
+          label="Company"
+          type="text"
+          fullWidth
+          value={employeeData.company}
+          onChange={handleChange}
+        />
+        <TextField
+          margin="dense"
+          name="first_name"
+          label="First Name"
+          type="text"
+          fullWidth
+          value={employeeData.first_name}
+          onChange={handleChange}
+        />
+        <TextField
+          margin="dense"
+          name="last_name"
+          label="Last Name"
+          type="text"
+          fullWidth
+          value={employeeData.last_name}
+          onChange={handleChange}
+        />
+        <TextField
+          margin="dense"
+          name="phone"
+          label="Phone"
+          type="tel"
+          fullWidth
+          value={employeeData.phone}
+          onChange={handleChange}
         />
         <TextField
           margin="dense"
@@ -76,7 +165,7 @@ function EditEmployeeDialog({ open, onClose, employee, companyId }) {
           type="text"
           fullWidth
           value={employeeData.insurance_company_id}
-          onChange={handleChange}
+          disabled
         />
         <TextField
           margin="dense"
@@ -85,15 +174,15 @@ function EditEmployeeDialog({ open, onClose, employee, companyId }) {
           type="text"
           fullWidth
           value={employeeData.magic_pill_plan_id}
-          onChange={handleChange}
+          disabled
         />
       </DialogContent>
-      < DialogActions >
-        <Button onClick={onClose} color="primary" >
-                    Cancel
+      <DialogActions>
+        <Button onClick={onClose} color="primary">
+          Cancel
         </Button>
-        < Button onClick={handleSubmit} color="primary" >
-                    Update
+        <Button onClick={handleSubmit} color="primary">
+          Update
         </Button>
       </DialogActions>
     </Dialog>

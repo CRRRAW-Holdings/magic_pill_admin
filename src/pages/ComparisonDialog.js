@@ -12,6 +12,11 @@ import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
+import {
+  IconTableCell,
+  HeaderTableRow,
+  StyledCheckbox
+} from '../styles/styledComponents';
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '&:hover': {
@@ -31,6 +36,17 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [checkedItems, setCheckedItems] = useState([]);
 
+  const added = processedCsvData.filter(data => data.action === 'add');
+  const edited = processedCsvData.filter(data => data.action === 'update');
+  const disabled = processedCsvData.filter(data => data.action === 'disable');
+
+  const dataMap = {
+    0: added,
+    1: edited,
+    2: disabled
+  };
+
+  const allRowsChecked = dataMap[selectedTab].length === checkedItems.length;
 
   const handleApprove = () => {
     dispatch(uploadCSVThunk(processedCsvData))
@@ -59,11 +75,15 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
     }
   };
 
-  const allRowsChecked = processedCsvData.length === checkedItems.length;
-  // Segregate data based on action
-  const added = processedCsvData.filter(data => data.action === 'add');
-  const edited = processedCsvData.filter(data => data.action === 'update');
-  const disabled = processedCsvData.filter(data => data.action === 'disable');
+  const handleSelectAll = () => {
+    const dataList = dataMap[selectedTab];
+    const usernames = dataList.map(user => user.action === 'update' ? user.newData.username : user.oldData.username);
+    if (usernames.every(username => checkedItems.includes(username))) {
+      setCheckedItems(prevState => prevState.filter(username => !usernames.includes(username)));
+    } else {
+      setCheckedItems(prevState => [...new Set([...prevState, ...usernames])]);
+    }
+  };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -81,30 +101,29 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
               <Typography variant="h6">Added Users</Typography>
               <Table>
                 <TableHead>
-                  <TableRow>
+                  <HeaderTableRow>
+                    <IconTableCell><StyledCheckbox checked={allRowsChecked} onChange={() => handleSelectAll(added)} /></IconTableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Username</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Email</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Magic Pill Plan ID</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Insurance Company ID</TableCell>
-                    <TableCell style={{ fontWeight: 'bold' }}>Action</TableCell>
-                  </TableRow>
+                  </HeaderTableRow>
                 </TableHead>
                 <TableBody>
                   {added.map((user, index) => (
                     <StyledTableRow key={index}>
-                      <TableCell>{user.newData.user_id}</TableCell>
-                      <TableCell>{user.newData.email}</TableCell>
-                      <TableCell>{user.newData.username}</TableCell>
-                      <TableCell>{user.newData.magic_pill_plan_id}</TableCell>
-                      <TableCell>{user.newData.insurance_company_id}</TableCell>
-                      <TableCell><AddIcon /></TableCell>
+                      <IconTableCell><AddIcon color="primary" /></IconTableCell>
                       <TableCell>
                         <Checkbox
                           checked={checkedItems.includes(user.newData.username)}
                           onChange={() => handleCheckboxChange(user.newData.username)}
                         />
-
                       </TableCell>
+                      <TableCell>{user.newData.user_id}</TableCell>
+                      <TableCell>{user.newData.email}</TableCell>
+                      <TableCell>{user.newData.username}</TableCell>
+                      <TableCell>{user.newData.magic_pill_plan_id}</TableCell>
+                      <TableCell>{user.newData.insurance_company_id}</TableCell>
                     </StyledTableRow>
                   ))}
                 </TableBody>
@@ -120,15 +139,23 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <Checkbox checked={allRowsChecked} onChange={() => handleSelectAll(edited)} />
+                    <TableCell style={{ fontWeight: 'bold' }}>Action</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Old User Info</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Edited User Info</TableCell>
-                    <TableCell style={{ fontWeight: 'bold' }}>Action</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {edited.map((user, index) => (
                     <React.Fragment key={index}>
                       <TableRow hover style={{ backgroundColor: '#FFEAB5', margin: '5px 0', borderRadius: '5px' }}>
+                        <TableCell>
+                          <Checkbox
+                            checked={checkedItems.includes(user.newData.username)}
+                            onChange={() => handleCheckboxChange(user.newData.username)}
+                          />
+
+                        </TableCell>
                         <TableCell>{user.oldData.username}<br />
                           {user.oldData.magic_pill_plan_id}<br />
                           {user.oldData.insurance_company_id}<br />
@@ -138,13 +165,6 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
                           {user.newData.magic_pill_plan_id}<br />
                           {user.newData.insurance_company_id}<br />
                           {user.newData.email}
-                        </TableCell>
-                        <TableCell>
-                          <Checkbox
-                            checked={checkedItems.includes(user.newData.username)}
-                            onChange={() => handleCheckboxChange(user.newData.username)}
-                          />
-
                         </TableCell>
                         <TableCell rowSpan={2}><EditIcon /></TableCell>
                       </TableRow>
@@ -163,21 +183,17 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell style={{ fontWeight: 'bold' }}><Checkbox checked={allRowsChecked} onChange={() => handleSelectAll(added)} /></TableCell>
+                    <TableCell style={{ fontWeight: 'bold' }}>Action</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Username</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Magic Pill Plan ID</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Insurance Company ID</TableCell>
                     <TableCell style={{ fontWeight: 'bold' }}>Email</TableCell>
-                    <TableCell style={{ fontWeight: 'bold' }}>Action</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {disabled.map((user, index) => (
                     <TableRow key={index} hover style={{ backgroundColor: '#fbeff0', margin: '5px 0', borderRadius: '5px' }}>
-                      <TableCell>{user.oldData.username}</TableCell>
-                      <TableCell>{user.oldData.magic_pill_plan_id}</TableCell>
-                      <TableCell>{user.oldData.insurance_company_id}</TableCell>
-                      <TableCell>{user.oldData.email}</TableCell>
-                      <TableCell><PersonOffIcon color="error" /></TableCell>
                       <TableCell>
                         <Checkbox
                           checked={checkedItems.includes(user.oldData.username)}
@@ -185,6 +201,11 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
                         />
 
                       </TableCell>
+                      <TableCell>{user.oldData.username}</TableCell>
+                      <TableCell>{user.oldData.magic_pill_plan_id}</TableCell>
+                      <TableCell>{user.oldData.insurance_company_id}</TableCell>
+                      <TableCell>{user.oldData.email}</TableCell>
+                      <TableCell><PersonOffIcon color="error" /></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -218,9 +239,9 @@ ComparisonDialog.propTypes = {
     magic_pill_plan_id: PropTypes.string.isRequired,
     insurance_company_id: PropTypes.string.isRequired,
     email: PropTypes.string,
-    oldData: PropTypes.string,
-    newData: PropTypes.string,
-    action: PropTypes.oneOf(['add', 'edit', 'disable']).isRequired
+    oldData: PropTypes.object,
+    newData: PropTypes.object,
+    action: PropTypes.oneOf(['add', 'update', 'disable']).isRequired
   })).isRequired
 };
 

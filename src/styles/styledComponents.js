@@ -3,7 +3,37 @@ import PropTypes from 'prop-types';
 import { Button, Paper, Table, TableContainer, TableRow, TableCell, TextField, Tooltip, InputAdornment, IconButton } from '@mui/material';
 import Background from '../assets/images/background.png';
 import SearchIcon from '@mui/icons-material/Search';
+import Checkbox from '@mui/material/Checkbox';
 
+
+export const IconTableCell = styled(TableCell)(({ theme }) => ({
+  padding: theme.spacing(0.5, 1),
+  width: '40px', // assuming icons are around this size, adjust if necessary
+}));
+
+// 2. Update Tab's First Row
+export const UpdateTabFirstRow = styled(TableRow)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[200],
+  fontWeight: 'bold',
+}));
+
+// 3. Select All Checkbox
+export const SelectAllCheckbox = styled('input')(({ theme }) => ({
+  margin: '0 10px',
+  cursor: 'pointer',
+}));
+
+// 2. Update Tab's First Row
+export const HeaderTableRow = styled(TableRow)(({ theme }) => ({
+  backgroundColor: theme.palette.grey[200],
+  fontWeight: 'bold',
+}));
+
+// 3. Select All Checkbox Style
+export const StyledCheckbox = styled(Checkbox)(({ theme }) => ({
+  margin: '0 10px',
+  cursor: 'pointer',
+}));
 
 export const ErrorMessage = styled('div')(({ theme }) => ({
   color: theme.palette.error.main,
