@@ -26,12 +26,12 @@ export const addEmployeeThunk = createAsyncThunk(
   async ({ companyId, employeeData }) => {
     const transformedData = {
       ...employeeData,
-      insurance_company_id: parseInt(employeeData.insurance_company_id, 10),
-      magic_pill_plan_id: parseInt(employeeData.magic_pill_plan_id, 10)
+      insurance_company_id: employeeData.insurance_company_id,
+      magic_pill_plan_id: employeeData.magic_pill_plan_id,
     };
 
     const response = await addEmployeeToCompany(companyId, transformedData);
-    console.log(response);
+    console.log(response, 'ADD');
     return transformedData;
   }
 );
@@ -40,11 +40,14 @@ export const addEmployeeThunk = createAsyncThunk(
 // Async thunk to update an employee
 export const updateEmployeeThunk = createAsyncThunk(
   'employee/updateEmployee',
-  async (employee) => {
-    const response = await updateEmployeeDetails(employee);
-    return response.data;
+  async ({ companyId, employeeData }) => {
+    // use companyId and employeeData as needed
+    const response = await updateEmployeeDetails(employeeData);
+    console.log(response, 'thunk');
+    return response.data.results[0]?.user;
   }
 );
+
 
 export const toggleEmployeeStatusThunk = createAsyncThunk(
   'employee/toggleEmployeeStatus',
@@ -75,6 +78,20 @@ export const uploadCSVThunk = createAsyncThunk(
   }
 );
 
+// In your employeeSlice.js or where you keep your thunks
+
+export const previewCSVThunk = createAsyncThunk(
+  'employee/previewCSV',
+  async (csvData, { dispatch, getState }) => {
+    try {
+      return csvData;  // If you want to keep this in the state.
+    } catch (error) {
+      return Promise.reject(error.message);
+    }
+  }
+);
+
+
 
 
 
@@ -86,8 +103,10 @@ const employeeSlice = createSlice({
     uploadProgress: {
       isLoading: false,  // A boolean flag to know if something is uploading.
       percentage: 0,    // The upload progress as a percentage.
-      message: ''       // Useful for displaying specific messages to the user.
+      message: '',
     },
+    processedCsvData: [],
+    isComparisonDialogOpen: false,      // Useful for displaying specific messages to the user.
     companyName: null,
     employees: [],
     loading: false,
@@ -99,6 +118,7 @@ const employeeSlice = createSlice({
     toggleEmployeeStatus: (state, action) => {
       const userId = action.payload;
       const employeeIndex = state.employees.findIndex(emp => emp.user_id === userId);
+      state.selectedEmployee = state.employees[employeeIndex];
 
       if (employeeIndex !== -1) {
         state.employees[employeeIndex].is_active = !state.employees[employeeIndex].is_active;
@@ -117,6 +137,10 @@ const employeeSlice = createSlice({
     updateUploadProgress: (state, action) => {
       state.uploadProgress.percentage = action.payload;
       state.uploadProgress.message = `Uploading... ${action.payload}%`;
+    },
+    setProcessedCsvData: (state, action) => {
+      console.log(state, action, 'CONSOLEEE');
+      state.processedCsvData = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -149,16 +173,17 @@ const employeeSlice = createSlice({
         state.hasError = true;
         state.errorMessage = action.payload || 'There was an issue adding the employee. Please try again later.';
       })
-
-      // updateEmployeeThunk
       .addCase(updateEmployeeThunk.pending, (state) => {
         state.hasError = false;
         state.errorMessage = '';
       })
       .addCase(updateEmployeeThunk.fulfilled, (state, action) => {
-        const index = state.employees.findIndex(e => e.employee_id === action.payload.employee_id);
+        const updatedUser = action.payload;
+        // Finding the index of the user to be updated.
+        const index = state.employees.findIndex(u => u.user_id === updatedUser.user_id);
         if (index !== -1) {
-          state.employees[index] = action.payload;
+          // Replacing the old user data with the updated data.
+          state.employees[index] = updatedUser;
         }
       })
       .addCase(updateEmployeeThunk.rejected, (state, action) => {
@@ -207,4 +232,4 @@ const employeeSlice = createSlice({
 
 
 export default employeeSlice.reducer;
-export const { selectEmployee, deselectEmployee, clearEmployeeError, updateUploadProgress } = employeeSlice.actions;
+export const { selectEmployee, deselectEmployee, clearEmployeeError, updateUploadProgress, setProcessedCsvData } = employeeSlice.actions;

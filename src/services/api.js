@@ -20,7 +20,8 @@ export const addEmployeeToCompany = (companyId, employeeData) => {
 
 export const updateEmployeeDetails = (employeeData) => {
   // Assuming an endpoint to update an employee looks like this:
-  return instance.put(`/employees/${employeeData.employee_id}`, employeeData);
+  console.log(`upDATE user ${employeeData.user_id}`, employeeData);
+  return instance.post(`/user/update/${employeeData.user_id}`, employeeData);
 };
 
 export const toggleEmployeeStatus = (employeeId) => {
@@ -35,7 +36,7 @@ export const loginUser = (username, password) => {
 
 // Company
 export const fetchCompaniesFromApi = () => {
-  return instance.get('/home');
+  return instance.get('/company');
 };
 
 export const uploadCSVData = (csvData, onProgress) => {
