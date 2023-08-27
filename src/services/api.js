@@ -2,12 +2,11 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'http://3.36.43.89:3000/',
+  baseURL: 'https://crrrawapis.com:3000/',
   headers: {
     'Content-Type': 'application/json',
   }
 });
-
 
 // Employee
 export const fetchEmployeesFromCompany = (companyId) => {
@@ -20,7 +19,6 @@ export const addEmployeeToCompany = (companyId, employeeData) => {
 
 export const updateEmployeeDetails = (employeeData) => {
   // Assuming an endpoint to update an employee looks like this:
-  console.log(`upDATE user ${employeeData.user_id}`, employeeData);
   return instance.post(`/user/update/${employeeData.user_id}`, employeeData);
 };
 
