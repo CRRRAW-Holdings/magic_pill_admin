@@ -2,24 +2,29 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@mui/material/Typography';
 import { FormField, LoginButton } from '../styles/styledLanding';
+import { useDispatch } from 'react-redux';
+import { sendSignInLinkToEmail } from '../slices/authSlice';
 
 const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-const LoginForm = ({ onSubmit, toggleForm }) => {
+const LoginForm = ({ toggleForm }) => {
+  const dispatch = useDispatch();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (event) => {
     event.preventDefault();
     setSubmitted(true);
-    onSubmit(email, password);
+    
+    if (isValidEmail(email)) {
+      dispatch(sendSignInLinkToEmail(email));
+    }
   };
 
   return (
     <>
       <Typography component="h1" variant="h5">
-        Sign In
+        Sign In with Email Link
       </Typography>
       <form onSubmit={handleSubmit}>
         <FormField
@@ -36,20 +41,8 @@ const LoginForm = ({ onSubmit, toggleForm }) => {
           error={submitted && !isValidEmail(email)}
           helperText={submitted && !isValidEmail(email) ? 'Invalid Email' : ''}
         />
-        <FormField
-          variant="outlined"
-          margin="normal"
-          required
-          fullWidth
-          name="password"
-          label="Password"
-          type="password"
-          id="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-        />
         <LoginButton type="submit" fullWidth variant="contained">
-          Login
+          Send Sign-In Link
         </LoginButton>
       </form>
     </>
@@ -57,7 +50,6 @@ const LoginForm = ({ onSubmit, toggleForm }) => {
 };
 
 LoginForm.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
   toggleForm: PropTypes.func.isRequired
 };
 

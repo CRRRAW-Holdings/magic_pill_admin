@@ -45,9 +45,6 @@ const Landing = () => {
             <LoginAvatar>
               <LockOutlinedIcon />
             </LoginAvatar>
-            <Typography component="h1" variant="h5">
-              {isSignUp ? 'Sign Up' : 'Sign In'}
-            </Typography>
             <Logo src={logo} alt="Magic Pill Logo" />
             {isSignUp ? 
               <SignUpForm onSubmit={handleSignup} toggleForm={toggleForm} /> : 
