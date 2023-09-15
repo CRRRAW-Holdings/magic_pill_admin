@@ -1,32 +1,37 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { auth } from '../services/authfirebase';
+import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signOut as firebaseSignOut } from 'firebase/auth';
+import { firebaseAuth } from '../services/authfirebase';
 
-export const sendSignInLinkToEmail = createAsyncThunk(
+const auth = firebaseAuth;
+
+export const sendSignInLinkToEmailAction = createAsyncThunk(
   'auth/sendSignInLinkToEmail',
   async (email, { rejectWithValue }) => {
     try {
-      await auth.sendSignInLinkToEmail(email, {
-        url: 'YOUR_REDIRECT_URL',  // replace with your redirect URL
+      const actionCodeSettings = {
+        url: `${process.env.REACT_APP_BASE_URL}/company`,
         handleCodeInApp: true,
-      });
+      };
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
       window.localStorage.setItem('emailForSignIn', email);
     } catch (error) {
+      console.log('sendSignInLinkToEmail', error);
       return rejectWithValue(error.message);
     }
   }
 );
 
-
-export const signInWithEmailLink = createAsyncThunk(
+export const signInWithEmailLinkAction = createAsyncThunk(
   'auth/signInWithEmailLink',
   async (_, { rejectWithValue }) => {
+    const emailLink = window.location.href;
     try {
       const email = window.localStorage.getItem('emailForSignIn');
-      if (!auth.isSignInWithEmailLink(window.location.href) || !email) {
+      if (!isSignInWithEmailLink(auth, emailLink) || !email) {
         throw new Error('Invalid email sign-in link.');
       }
 
-      const result = await auth.signInWithEmailLink(email, window.location.href);
+      const result = await signInWithEmailLink(auth, email, emailLink);
       window.localStorage.removeItem('emailForSignIn');
       return result.user;
     } catch (error) {
@@ -35,17 +40,16 @@ export const signInWithEmailLink = createAsyncThunk(
   }
 );
 
-export const signOut = createAsyncThunk(
+export const signOutAction = createAsyncThunk(
   'auth/signOut',
   async (_, { rejectWithValue }) => {
     try {
-      await auth.signOut();
+      await firebaseSignOut(auth);
     } catch (error) {
       return rejectWithValue(error.message);
     }
   }
 );
-
 
 const initialState = {
   user: null,
@@ -75,38 +79,38 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(sendSignInLinkToEmail.pending, (state) => {
+      .addCase(sendSignInLinkToEmailAction.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(sendSignInLinkToEmail.fulfilled, (state) => {
+      .addCase(sendSignInLinkToEmailAction.fulfilled, (state) => {
         state.loading = false;
       })
-      .addCase(sendSignInLinkToEmail.rejected, (state, action) => {
+      .addCase(sendSignInLinkToEmailAction.rejected, (state, action) => {
         state.error = action.payload;
         state.loading = false;
       })
-      .addCase(signInWithEmailLink.pending, (state) => {
+      .addCase(signInWithEmailLinkAction.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(signInWithEmailLink.fulfilled, (state, action) => {
+      .addCase(signInWithEmailLinkAction.fulfilled, (state, action) => {
         state.user = action.payload;
         state.loading = false;
       })
-      .addCase(signInWithEmailLink.rejected, (state, action) => {
+      .addCase(signInWithEmailLinkAction.rejected, (state, action) => {
         state.error = action.payload;
         state.loading = false;
       })
-      .addCase(signOut.pending, (state) => {
+      .addCase(signOutAction.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(signOut.fulfilled, (state) => {
+      .addCase(signOutAction.fulfilled, (state) => {
         state.user = null;
         state.loading = false;
       })
-      .addCase(signOut.rejected, (state, action) => {
+      .addCase(signOutAction.rejected, (state, action) => {
         state.error = action.payload;
         state.loading = false;
       });
@@ -115,15 +119,3 @@ const authSlice = createSlice({
 
 export const { authStart, authSuccess, authError, logoutSuccess } = authSlice.actions;
 export default authSlice.reducer;
-// import { useDispatch } from 'react-redux';
-// import { sendSignInLinkToEmail, signInWithEmailLink } from './authSlice';
-
-// function MyComponent() {
-//   const dispatch = useDispatch();
-
-//   // For sending sign-in link
-//   dispatch(sendSignInLinkToEmail(email));
-
-//   // For signing in with email link
-//   dispatch(signInWithEmailLink({ email, emailLink: window.location.href }));
-// }

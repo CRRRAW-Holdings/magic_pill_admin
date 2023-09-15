@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Typography from '@mui/material/Typography';
 import { FormField, LoginButton } from '../styles/styledLanding';
 import { useDispatch } from 'react-redux';
-import { sendSignInLinkToEmail } from '../slices/authSlice';
+import { sendSignInLinkToEmailAction } from '../slices/authSlice';
 
 const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -17,7 +17,7 @@ const LoginForm = ({ toggleForm }) => {
     setSubmitted(true);
     
     if (isValidEmail(email)) {
-      dispatch(sendSignInLinkToEmail(email));
+      dispatch(sendSignInLinkToEmailAction(email));
     }
   };
 
