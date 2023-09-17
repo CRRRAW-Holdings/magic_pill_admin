@@ -5,185 +5,179 @@ import Background from '../assets/images/background.png';
 import SearchIcon from '@mui/icons-material/Search';
 import Checkbox from '@mui/material/Checkbox';
 
-
+// Icon TableCell with adjusted padding and width
 export const IconTableCell = styled(TableCell)(({ theme }) => ({
   padding: theme.spacing(0.5, 1),
-  width: '40px', // assuming icons are around this size, adjust if necessary
+  width: 'auto', 
 }));
 
-// 2. Update Tab's First Row
+// Table Row for the Update Tab with a grey background and bold font
 export const UpdateTabFirstRow = styled(TableRow)(({ theme }) => ({
   backgroundColor: theme.palette.grey[200],
   fontWeight: 'bold',
 }));
 
-// 3. Select All Checkbox
+// A generic input styled for selecting all items (e.g. checkboxes)
 export const SelectAllCheckbox = styled('input')(({ theme }) => ({
   margin: '0 10px',
   cursor: 'pointer',
 }));
 
-// 2. Update Tab's First Row
+// Table Row for headers with a grey background and bold font
 export const HeaderTableRow = styled(TableRow)(({ theme }) => ({
   backgroundColor: theme.palette.grey[200],
   fontWeight: 'bold',
 }));
 
-// 3. Select All Checkbox Style
+// A Checkbox styled with margins and a pointer cursor
 export const StyledCheckbox = styled(Checkbox)(({ theme }) => ({
   margin: '0 10px',
   cursor: 'pointer',
 }));
 
+// Display an error message with theme's error color, centered text and margin at the bottom
 export const ErrorMessage = styled('div')(({ theme }) => ({
   color: theme.palette.error.main,
   textAlign: 'center',
   marginBottom: '10px',
 }));
 
-// SuccessMessage styled component
+// Display a success message with theme's success color, centered text and margin at the bottom
 export const SuccessMessage = styled('div')(({ theme }) => ({
   color: theme.palette.success.main,
   textAlign: 'center',
   marginBottom: '10px',
 }));
 
-// CompanyName styled component
+// Large Company Name Header with white color and a shadow for legibility
 export const CompanyName = styled('h1')(({ theme }) => ({
   fontSize: '2rem',
-  fontFamily: 'Roboto, sans-serif',  // Ensuring Roboto font
+  fontFamily: 'Roboto, sans-serif', 
   fontWeight: 'bold',
-  marginBottom: '20px',
-  color: theme.palette.common.white,  // Bright color for dark background
-  textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)', // Optional: adding a subtle shadow for better legibility
+  color: theme.palette.common.white,
+  textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)', 
 }));
 
+// Secondary Company Name styled slightly smaller than the main title
 export const ActualCompanyName = styled('h2')(({ theme }) => ({
-  fontSize: '1.5rem',      // Slightly smaller than the main title
-  fontFamily: 'Roboto, sans-serif',  // Ensuring Roboto font
-  fontWeight: '600',       // Semi-bold, not as bold as the main title
-  marginBottom: '15px',    // Some space before the next element
-  color: theme.palette.common.white,  // Bright color for dark background
-  textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)', // Optional: subtle shadow for better legibility
+  fontSize: '1.5rem',
+  fontFamily: 'Roboto, sans-serif',
+  fontWeight: '600',
+  color: theme.palette.common.white,
+  textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
 }));
 
+// Edit Button with theme's primary light color and hover effects
 export const EditButton = styled(Button)(({ theme }) => ({
+  ...commonButtonStyles(theme),  // spread the common styles
   backgroundColor: theme.palette.primary.light,
   '&:hover': {
     backgroundColor: theme.palette.primary.main,
   },
 }));
 
+// Add Employee Button with a dark success color and hover effects
 export const AddEmployeeButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.success.dark,
   fontSize: '16px',
-  padding: '12px 30px',  // increased horizontal padding for more width
-  minWidth: '150px',  // set a minimum width to ensure it's always wide, adjust as needed
+  padding: '12px 30px',
+  minWidth: '150px',
+  [theme.breakpoints.down('sm')]: {  // On extra small screens
+    width: 'calc(85% - 10px)',   // Take up half the space minus a little for margin
+    marginRight: '10px',         // Some margin to separate from the other button
+  },
   borderRadius: '8px',
-  textTransform: 'uppercase',  // making sure it's uppercase
+  textTransform: 'uppercase',
   boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-
   '&:hover': {
     backgroundColor: theme.palette.success.light,
     boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
   },
 }));
 
+// TableRow with different background colors based on the row type (e.g., add, edit, disable)
 export const StyledTableRow = styled(TableRow)(({ theme, rowType }) => {
   switch (rowType) {
   case 'add':
     return {
-      '&:hover': {
-        backgroundColor: theme.palette.success.main,
-        borderRadius: '5px',
-      },
-      '&:active': {
-        backgroundColor: theme.palette.success.dark,
-        borderRadius: '5px',
-      },
+      '&:hover': { backgroundColor: theme.palette.success.main, borderRadius: '5px' },
+      '&:active': { backgroundColor: theme.palette.success.dark, borderRadius: '5px' },
       backgroundColor: theme.palette.success.light,
-      borderRadius: '5px'
+      borderRadius: '5px',
     };
   case 'edit':
     return {
-      '&:hover': {
-        backgroundColor: theme.palette.warning.light,
-        borderRadius: '5px',
-      },
-      '&:active': {
-        backgroundColor: theme.palette.warning.light,
-        borderRadius: '5px',
-      },
+      '&:hover': { backgroundColor: theme.palette.warning.light, borderRadius: '5px' },
+      '&:active': { backgroundColor: theme.palette.warning.light, borderRadius: '5px' },
       backgroundColor: theme.palette.baseWhite.main,
-      borderRadius: '5px'
+      borderRadius: '5px',
     };
   case 'disable':
     return {
-      '&:hover': {
-        backgroundColor: theme.palette.error.main,
-        borderRadius: '5px',
-      },
-      '&:active': {
-        backgroundColor: theme.palette.error.dark,
-        borderRadius: '5px',
-      },
+      '&:hover': { backgroundColor: theme.palette.error.main, borderRadius: '5px' },
+      '&:active': { backgroundColor: theme.palette.error.dark, borderRadius: '5px' },
       backgroundColor: theme.palette.error.light,
-      borderRadius: '5px'
+      borderRadius: '5px',
     };
   default:
     return {};
   }
 });
 
-
-
-// StyledTable for MUI Table component
+// Table with minimum width and adjusted cell borders
 export const StyledTable = styled(Table)(({ theme }) => ({
   minWidth: '650px',
   '& thead th': {
-    borderBottom: `2px solid ${theme.palette.grey.main}`,  // Stronger border for header
+    borderBottom: `2px solid ${theme.palette.grey.main}`,
   },
   '& tbody td': {
-    borderBottom: `1px solid ${theme.palette.grey.light}`,  // Subtle border for body rows
-    borderRight: `1px solid ${theme.palette.grey.light}`,  // Column separators
-    '&:last-child': {
-      borderRight: 'none',  // Remove border for the last cell
-    }
+    borderBottom: `1px solid ${theme.palette.grey.light}`,
+    borderRight: `1px solid ${theme.palette.grey.light}`,
+    '&:last-child': { borderRight: 'none' }
   },
 }));
 
-// StyledTableContainer for MUI TableContainer component
+// Table Container with a defined max height, scroll capability, and border adjustments
 export const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   marginTop: '20px',
-  border: `1px solid ${theme.palette.grey.main}`,  // Table border
-  borderRadius: '4px',  // Optional: small border radius for softness
-  backgroundColor: '#ffffff',  // Setting table's direct background to white (or any color you prefer)
-  maxHeight: '90%',
-  height: '600px',
+  border: `1px solid ${theme.palette.grey.main}`,
+  borderRadius: '4px',
+  backgroundColor: '#ffffff',
+  height: 'auto',  // Make height adaptive to content
+  maxHeight: '800px',  // But set a maximum height
   overflowY: 'auto',
 }));
 
-// DisableButton styled component
+const commonButtonStyles = ({ theme }) => ({
+  minWidth: '100px',  // or any size that you want
+  height: '40px',
+  padding: '10px 20px',
+});
+
+// Disable Button with rustic redwood theme colors
 export const DisableButton = styled(Button)(({ theme }) => ({
+  ...commonButtonStyles(theme),  // spread the common styles
   color: theme.palette.common.white,
-  backgroundColor: theme.palette.rusticRedwood.light,  // changed from main to light
+  backgroundColor: theme.palette.rusticRedwood.light,
   '&:hover': {
-    backgroundColor: theme.palette.rusticRedwood.main,  // changed from dark to main
+    backgroundColor: theme.palette.rusticRedwood.main,
   },
   textAlign: 'justify',
   marginLeft: '20px'
 }));
 
-// EnableButton styled component
+// Enable Button with oceanic deep theme colors
 export const EnableButton = styled(Button)(({ theme }) => ({
+  ...commonButtonStyles(theme),  // spread the common styles
   color: theme.palette.common.white,
-  backgroundColor: theme.palette.success.dark,  // changed from main to light
+  backgroundColor: theme.palette.oceanicDeep.dark,
   '&:hover': {
-    backgroundColor: theme.palette.success.light,  // changed from dark to main
+    backgroundColor: theme.palette.oceanicDeep.light,
   },
   textAlign: 'justify',
   marginLeft: '20px'
 }));
+
 
 // StyledTooltip for locked state
 export const LockedTooltip = styled(Tooltip)(({ theme }) => ({
@@ -201,18 +195,8 @@ export const LockedTooltip = styled(Tooltip)(({ theme }) => ({
 // Spacing Between Rows and Columns
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
   padding: theme.spacing(1, 2),
-  justifyContent: 'space-between'
-}));
-
-// Alternating Row Colors
-export const EmployeeRow = styled(({ isActive, ...otherProps }) => <TableRow {...otherProps} />)(({ theme, isActive }) => ({
-  backgroundColor: isActive ? theme.palette.action.hover : theme.palette.error.light,
-  '&:nth-of-type(odd)': {
-    backgroundColor: isActive ? 'inherit' : theme.palette.error.light,
-  },
-  '&:hover': {
-    backgroundColor: theme.palette.grey.main,
-  },
+  justifyContent: 'space-between',
+  textAlign: 'center',
 }));
 
 // Table Header Styling
@@ -223,7 +207,8 @@ export const HeaderCell = styled(TableCell)(({ theme }) => ({
   position: 'sticky',
   top: 0,
   zIndex: 1,  // Optional: to ensure header stays on top
-  background: '#fff'
+  background: '#fff',
+  textAlign: 'center'
 }));
 
 export const UploadCSVButton = styled(Button)(({ theme }) => ({
@@ -233,6 +218,9 @@ export const UploadCSVButton = styled(Button)(({ theme }) => ({
   fontSize: '16px',
   padding: '12px 30px',
   minWidth: '150px',
+  [theme.breakpoints.down('sm')]: {  // On extra small screens
+    width: 'calc(85% - 10px)',   // Take up half the space minus a little for margin
+  },
   borderRadius: '8px',
   textTransform: 'uppercase',
   boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
@@ -252,8 +240,18 @@ export const BulkEditButton = styled(Button)(({ theme }) => ({
   },
 }));
 
+export const EmployeeRow = styled(({ isActive, ...otherProps }) => <TableRow {...otherProps} />)(({ theme, isActive }) => ({
+  backgroundColor: isActive ? theme.palette.action.hover : theme.palette.error.light,
+  '&:nth-of-type(odd)': {
+    backgroundColor: isActive ? 'inherit' : theme.palette.error.light,
+  },
+  '&:hover': {
+    backgroundColor: theme.palette.grey.main,
+  },
+}));
+
 export const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: '20px',
+  padding: '10px',
   margin: '16px 32px',
   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
   backgroundImage: `url(${Background})`,
@@ -263,11 +261,17 @@ export const StyledPaper = styled(Paper)(({ theme }) => ({
 }));
 
 
-
 export const SearchBar = styled(TextField)(({ theme }) => ({
-  marginBottom: '20px',
   padding: '10px',
-  width: '50%',
+  width: '80%',
+  display: 'block',  // Ensure it's a block-level element by default
+  [theme.breakpoints.up('sm')]: {  // On small screens and up
+    width: 'calc(100% - 20px)',   // Full width minus paddings
+    marginBottom: '10px',  // Margin to separate from the following items
+  },
+  [theme.breakpoints.up('md')]: {  // On medium screens and up
+    width: '60%',   // Adjust width
+  },
   fontFamily: 'Roboto, sans-serif',  // Ensuring Roboto font
   '& .MuiInputBase-root': {
     color: '#fff',

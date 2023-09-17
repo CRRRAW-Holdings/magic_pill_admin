@@ -7,6 +7,8 @@ import {
   toggleEmployeeStatusThunk,
   setProcessedCsvData,
 } from '../slices/employeeSlice';
+import { fetchCompanies } from '../slices/companySlice';
+
 import { processFile } from '../utils/csvUtil';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
@@ -21,7 +23,6 @@ import {
 import LockIcon from '@mui/icons-material/Lock';
 import {
   StyledPaper,
-  ActualCompanyName,
   CompanyName,
   AddEmployeeButton,
   UploadCSVButton,
@@ -48,6 +49,8 @@ function Employee() {
   const { id: companyId } = useParams();
   const dispatch = useDispatch();
   const employees = useSelector((state) => state.employee?.employees || defaultEmployees);
+  const companies = useSelector((state) => state.company.companies);
+  console.log(companies, 'companies');
   const companyName = useSelector((state) => state.employee.companyName);
   const selectedEmployee = useSelector((state) => state.employee.selectedEmployee);
   // const [isUploadSuccessful, setIsUploadSuccessful] = useState(false);
@@ -56,21 +59,34 @@ function Employee() {
   const [isComparisonDialogOpen, setIsComparisonDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  console.log(searchQuery);
   const processedCsvData = useSelector((state) => state.employee.processedCsvData) || [];
   useEffect(() => {
     dispatch(fetchEmployees(companyId));
+    dispatch(fetchCompanies());
+    // dispatch(fetchPlans());
   }, [companyId, dispatch]);
+
 
   const fileRef = useRef(null);
 
-  const filteredEmployees = employees.filter(employee => {
-    const searchTerm = searchQuery.toLowerCase();
-    return (
-      employee.username.toLowerCase().includes(searchTerm) ||
-      employee.email.toLowerCase().includes(searchTerm)
-    );
-  });
+  const filteredEmployees = employees
+    .filter(employee => {
+      const searchTerm = searchQuery.toLowerCase();
+      return (
+        employee.username.toLowerCase().includes(searchTerm) ||
+        employee.email.toLowerCase().includes(searchTerm)
+      );
+    })
+    .sort((a, b) => {
+      if (a.is_active && !b.is_active) {
+        return -1;
+      }
+      if (!a.is_active && b.is_active) {
+        return 1;
+      }
+      return 0;
+    });
+
 
   const handleSearch = (value) => {
     setSearchQuery(value);
@@ -84,18 +100,20 @@ function Employee() {
   const toggleEmployeeStatus = (employee) => {
     dispatch(toggleEmployeeStatusThunk(employee.user_id))
       .then((value) => {
-        console.log(value.payload,'val');
+        console.log(value.payload, 'val');
         toast.success('Employee toggle successful');
       })
       .catch(() => {
         toast.error('Failed to toggle employee status!');
       });
-  };  
+  };
   const handleUserDialogClose = (updatedUser) => {
-    toast.success(`${updatedUser.username} was added successfully!`);
+    if (updatedUser.user_id) {
+      toast.success(`${updatedUser.username} was added successfully!`);
+    }
     setIsEditEmployeeDialogOpen(false);
   };
-  
+
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -112,7 +130,7 @@ function Employee() {
         console.error(error);
       }
     );
-  };  
+  };
 
   return (
     <StyledPaper>
@@ -127,11 +145,10 @@ function Employee() {
         draggable
         pauseOnHover
       />
-      <div style={{ textAlign: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <CompanyName>{companyName}</CompanyName>
-        <ActualCompanyName>Employee Management</ActualCompanyName>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
         <AddEmployeeButton variant="contained" onClick={() => setIsAddEmployeeDialogOpen(true)}>
           Add Employee
         </AddEmployeeButton>
@@ -147,8 +164,7 @@ function Employee() {
             <TableRow>
               <HeaderCell>Username</HeaderCell>
               <HeaderCell>Email</HeaderCell>
-              <HeaderCell>Company Name</HeaderCell>
-              <HeaderCell>Plan ID</HeaderCell>
+              <HeaderCell>Plan</HeaderCell>
               <HeaderCell>Actions</HeaderCell>
             </TableRow>
           </TableHead>
@@ -168,8 +184,8 @@ function Employee() {
                   )}
                 </StyledTableCell>
                 <StyledTableCell>{employee.email}</StyledTableCell>
-                <StyledTableCell>{employee.magic_pill_plan_id}</StyledTableCell>
-                <StyledTableCell>{employee.email}</StyledTableCell>
+                <StyledTableCell>{employee.magic_pill_plan?.plan_name}</StyledTableCell>
+
                 <StyledTableCell>
                   <EditButton variant="contained" onClick={() => editEmployee(employee)}>Edit</EditButton>
                   {employee.is_active ? (
