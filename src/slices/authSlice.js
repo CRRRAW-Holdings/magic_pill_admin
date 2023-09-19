@@ -1,8 +1,26 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signOut as firebaseSignOut } from 'firebase/auth';
 import { firebaseAuth } from '../services/authfirebase';
+import { fetchAdminByEmail } from '../services/api';
+
 
 const auth = firebaseAuth;
+
+export const getAdminByEmail = createAsyncThunk(
+  'login/getAdminByEmail',
+  async (email, thunkAPI) => {
+    try {
+      const response = await fetchAdminByEmail(email);
+      if (response.data.exists) {
+        return response.data;
+      } else {
+        return thunkAPI.rejectWithValue('This admin email is not registered in our systerm');
+      }
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
 
 export const sendSignInLinkToEmailAction = createAsyncThunk(
   'auth/sendSignInLinkToEmail',
@@ -33,7 +51,8 @@ export const signInWithEmailLinkAction = createAsyncThunk(
 
       const result = await signInWithEmailLink(auth, email, emailLink);
       window.localStorage.removeItem('emailForSignIn');
-      return result.user;
+      console.log(result, 'result');
+      return result.admin;
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -52,7 +71,7 @@ export const signOutAction = createAsyncThunk(
 );
 
 const initialState = {
-  user: null,
+  admin: null,
   loading: false,
   error: null,
 };
@@ -66,7 +85,7 @@ const authSlice = createSlice({
       state.error = null;
     },
     authSuccess: (state, action) => {
-      state.user = action.payload;
+      state.admin = action.payload;
       state.loading = false;
     },
     authError: (state, action) => {
@@ -74,11 +93,19 @@ const authSlice = createSlice({
       state.loading = false;
     },
     logoutSuccess: (state) => {
-      state.user = null;
+      state.admin = null;
     },
   },
   extraReducers: (builder) => {
     builder
+      .addCase(getAdminByEmail.fulfilled, (state, action) => {
+        state.admin = action.payload;
+        state.loading = false;
+      })
+      .addCase(getAdminByEmail.rejected, (state, action) => {
+        state.error = true;
+        state.loading = false;
+      })
       .addCase(sendSignInLinkToEmailAction.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -95,7 +122,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(signInWithEmailLinkAction.fulfilled, (state, action) => {
-        state.user = action.payload;
+        state.admin = action.payload;
         state.loading = false;
       })
       .addCase(signInWithEmailLinkAction.rejected, (state, action) => {
@@ -107,7 +134,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(signOutAction.fulfilled, (state) => {
-        state.user = null;
+        state.admin = null;
         state.loading = false;
       })
       .addCase(signOutAction.rejected, (state, action) => {

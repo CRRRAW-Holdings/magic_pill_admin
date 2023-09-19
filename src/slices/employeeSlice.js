@@ -31,7 +31,7 @@ export const addEmployeeThunk = createAsyncThunk(
     };
 
     const response = await addEmployeeToCompany(companyId, transformedData);
-    console.log(response, 'ADD');
+    console.log(response);
     return transformedData;
   }
 );
@@ -43,7 +43,6 @@ export const updateEmployeeThunk = createAsyncThunk(
   async ({ companyId, employeeData }) => {
     // use companyId and employeeData as needed
     const response = await updateEmployeeDetails(employeeData);
-    console.log(response, 'thunk');
     return response.data.results[0]?.user;
   }
 );
@@ -56,7 +55,6 @@ export const toggleEmployeeStatusThunk = createAsyncThunk(
       const response = await toggleEmployeeStatus(userId);
       return response.data.results[0].success;
     } catch (err) {
-      console.log(err);
       return rejectWithValue(err.response.data);
     }
   }
@@ -68,6 +66,7 @@ export const uploadCSVThunk = createAsyncThunk(
   'employee/uploadCSV',
   async (csvData, api) => {
     try {
+      console.log(csvData);
       const response = await uploadCSVData(csvData, (progress) => {
         api.dispatch(updateUploadProgress(progress));  // Dispatch the progress update
       });
@@ -139,7 +138,6 @@ const employeeSlice = createSlice({
       state.uploadProgress.message = `Uploading... ${action.payload}%`;
     },
     setProcessedCsvData: (state, action) => {
-      console.log(state, action, 'CONSOLEEE');
       state.processedCsvData = action.payload;
     },
   },
@@ -151,7 +149,6 @@ const employeeSlice = createSlice({
         state.errorMessage = '';
       })
       .addCase(fetchEmployees.fulfilled, (state, action) => {
-        console.log(action, 'fetchEmployees');
         state.companyName = action.payload.companyName;
         state.employees = action.payload.users;
       })

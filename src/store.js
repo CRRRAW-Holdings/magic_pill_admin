@@ -1,18 +1,18 @@
 // src/store.js
 
 import { configureStore } from '@reduxjs/toolkit';
-import loginReducer from './slices/loginSlice';
 import companySlice from './slices/companySlice';
 import employeeSlice from './slices/employeeSlice';
+import authSlice from './slices/authSlice';
+
 
 const loggerMiddleware = store => next => action => {
-  console.log('dispatching', action);
   return next(action);
 };
 
 const store = configureStore({
   reducer: {
-    login: loginReducer,
+    auth: authSlice,
     company: companySlice,
     employee: employeeSlice,
   },

@@ -6,6 +6,8 @@ import Landing from './pages/Landing';
 import Company from './pages/Company';
 import Employee from './pages/Employee';
 import NotFound from './pages/NotFound';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
@@ -21,6 +23,7 @@ function App() {
               <Route path='*' element={<NotFound />} />
             </Routes>
           </Router>
+          <ToastContainer />
         </header>
       </div>
     </ThemeProvider>

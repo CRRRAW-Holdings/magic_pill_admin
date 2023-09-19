@@ -3,11 +3,10 @@ import * as XLSX from 'xlsx';
 
 const isValidFileType = (fileName) => {
   return /.csv$/i.test(fileName) || /\.xls(x)?$/i.test(fileName);
-
 };
 
 const isValidFileSize = (fileSize) => {
-  const maxSize = 5 * 1024 * 1024; // Example: 5MB
+  const maxSize = 25 * 1024 * 1024; // 25MB
   return fileSize <= maxSize;
 };
 
@@ -16,7 +15,6 @@ const isFileValid = (file) => {
 };
 
 const parseCSV = (content) => {
-  console.log(content, 'content');
   return Papa.parse(content, {
     header: true,
     dynamicTyping: true,
@@ -51,7 +49,6 @@ const readFileContent = (file, onSuccess, onError) => {
       };
       reader.readAsBinaryString(file);
     } else {
-      // Fallback for browsers that don't support readAsBinaryString
       reader.onload = function (evt) {
         let data = new Uint8Array(evt.target.result);
         let binaryString = '';
@@ -63,79 +60,86 @@ const readFileContent = (file, onSuccess, onError) => {
       reader.readAsArrayBuffer(file);
     }
   } else {
-    onError('Unsupported file type.');
+    onError(`Unsupported file type: ${fileType}`);
   }
 };
-const transformFileEmployee = (employee) => {
+
+const transformEmployee = (employee) => {
+  const formattedDOB = new Date(employee.dob).toLocaleDateString('en-GB'); // Converts date to 'day/month/year' format
   return {
-    username: employee[''],
-    email: employee._1,
-    insurance_company_id: employee._3,
-    magic_pill_plan_id: employee._2,
+    email: employee.email,
+    dob: employee.dob,
+    username: `${employee.email}_${formattedDOB}`, 
+    insurance_company_id: employee.insurance_company_id,
+    magic_pill_plan_id: employee.magic_pill_plan_id,
+    is_active: employee.is_active,
+    address: employee.address,
+    age: employee.age,
+    company: employee.company,
+    first_name: employee.first_name,
+    last_name: employee.last_name,
+    phone: employee.phone
   };
 };
 
-const transformTempEmployee = (tempEmployee) => {
-  // Transform the employee into the desired structure
-  return {
-    username: tempEmployee.username,  // Replace 'someField' with the actual field names
-    email: tempEmployee.email,
-    insurance_company_id: tempEmployee.anotherField, // Adjust accordingly
-    magic_pill_plan_id: tempEmployee.yetAnotherField, // Adjust accordingly
-    // Add other fields if needed
-  };
+const hasDifferences = (oldEmployee, newEmployee) => {
+  for (const key in oldEmployee) {
+    if (oldEmployee[key] !== newEmployee[key]) {
+      return true;
+    }
+  }
+  return false;
 };
 
 const compareFileWithCurrentData = (fileContent, employees) => {
   let results = [];
-  let tempEmployees = [...employees]; 
+  let processedUsernames = [];
 
-  // Ignore the first two entries in the fileContent
-  for (let index = 2; index < fileContent.length; index++) {
-    const fileEmployee = fileContent[index];
-    const transformedEmployee = transformFileEmployee(fileEmployee); // assuming this function exists
+  fileContent.forEach(fileEmployee => {
+    const transformedEmployeeFromFile = transformEmployee(fileEmployee);
 
-    const match = tempEmployees.find(emp => emp.username === transformedEmployee.username);
+    const matchedEmployee = employees.find(emp => emp.email === transformedEmployeeFromFile.email);
 
-    if (match) {
-      if (JSON.stringify(match) !== JSON.stringify(transformedEmployee)) {
+    if (matchedEmployee) {
+      if (hasDifferences(matchedEmployee, transformedEmployeeFromFile)) {
         results.push({
           action: 'update',
-          oldData: match,
-          newData: transformedEmployee
+          user_id: transformedEmployeeFromFile.username,
+          user_data: transformedEmployeeFromFile
         });
       }
-      // Remove the matched employee so they won't be marked as 'disable'
-      tempEmployees = tempEmployees.filter(emp => emp.username !== transformedEmployee.username);
+      processedUsernames.push(transformedEmployeeFromFile.username);
+      employees = employees.filter(emp => emp.username !== transformedEmployeeFromFile.username);
     } else {
       results.push({
         action: 'add',
-        oldData: null,
-        newData: transformedEmployee
+        user_id: transformedEmployeeFromFile.username,
+        user_data: transformedEmployeeFromFile
       });
+      processedUsernames.push(transformedEmployeeFromFile.username);
     }
-  }
-
-  tempEmployees.forEach(employee => {
-    // If you need to transform old stored employee data, use this:
-    const transformedTempEmployee = transformTempEmployee(employee); 
-    // Otherwise, you can just use "employee"
-    
-    results.push({
-      action: 'disable',
-      oldData: transformedTempEmployee,
-      newData: null
-    });
   });
+
+  employees
+    .filter(emp => !processedUsernames.includes(emp.username))
+    .forEach(remainingEmployee => {
+      const transformedRemainingEmployee = transformEmployee(remainingEmployee);
+      results.push({
+        action: 'toggle',
+        user_id: transformedRemainingEmployee.username,
+        user_data: transformedRemainingEmployee,
+      });
+    });
 
   return results;
 };
 
+// ... Rest of the code remains the same
 
 
 export const processFile = (file, employees, onSuccess, onError) => {
   if (!isFileValid(file)) {
-    onError('Invalid file type or size.');
+    onError('Invalid file type or size. Max allowed size: 25MB');
     return;
   }
 

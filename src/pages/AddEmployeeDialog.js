@@ -9,9 +9,11 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 import PropTypes from 'prop-types';
 
-function AddEmployeeDialog({ open, onClose, companyId }) {
+function AddEmployeeDialog({ open, onClose, companyId, companies }) {
   const dispatch = useDispatch();
   const [employeeData, setEmployeeData] = useState({
     username: '',
@@ -21,8 +23,6 @@ function AddEmployeeDialog({ open, onClose, companyId }) {
     is_active: true,
     address: '',
     dob: '',
-    age: '',
-    company: '',
     first_name: '',
     last_name: '',
     phone: ''
@@ -50,8 +50,6 @@ function AddEmployeeDialog({ open, onClose, companyId }) {
             is_active: true,
             address: '',
             dob: '',
-            age: '',
-            company: '',
             first_name: '',
             last_name: '',
             phone: ''
@@ -88,15 +86,23 @@ function AddEmployeeDialog({ open, onClose, companyId }) {
           value={employeeData.email}
           onChange={handleChange}
         />
-        <TextField
-          margin="dense"
-          name="insurance_company_id"
-          label="Insurance Company ID"
-          type="text"
-          fullWidth
+        <Select
           value={employeeData.insurance_company_id}
           onChange={handleChange}
-        />
+          displayEmpty
+          fullWidth
+          name="insurance_company_id"
+          margin="dense"
+        >
+          <MenuItem disabled value="">
+            <em>Select a company</em>
+          </MenuItem>
+          {companies.map(company => (
+            <MenuItem key={company.insurance_company_id} value={company.insurance_company_id}>
+              {company.insurance_company_name}
+            </MenuItem>
+          ))}
+        </Select>
         <TextField
           margin="dense"
           name="magic_pill_plan_id"
@@ -136,24 +142,6 @@ function AddEmployeeDialog({ open, onClose, companyId }) {
             shrink: true,
           }}
           value={employeeData.dob}
-          onChange={handleChange}
-        />
-        <TextField
-          margin="dense"
-          name="age"
-          label="Age"
-          type="number"
-          fullWidth
-          value={employeeData.age}
-          onChange={handleChange}
-        />
-        <TextField
-          margin="dense"
-          name="company"
-          label="Company"
-          type="text"
-          fullWidth
-          value={employeeData.company}
           onChange={handleChange}
         />
         <TextField
@@ -199,7 +187,14 @@ function AddEmployeeDialog({ open, onClose, companyId }) {
 AddEmployeeDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   companyId: PropTypes.string.isRequired,
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
+  companies: PropTypes.arrayOf(
+    PropTypes.shape({
+      insurance_company_id: PropTypes.number.isRequired,
+      insurance_company_name: PropTypes.string.isRequired,
+      insurance_company_phone_number: PropTypes.string
+    })
+  ).isRequired
 };
 
 export default AddEmployeeDialog;

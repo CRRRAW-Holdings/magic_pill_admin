@@ -8,6 +8,8 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSearchTerm, fetchCompanies } from '../slices/companySlice';
+import { getAdminByEmail } from '../slices/authSlice';
+
 
 // Wrapper styles
 const Wrapper = styled.div`
@@ -157,7 +159,8 @@ const ErrorMessage = styled.div`
 
 const Company = () => {
   const dispatch = useDispatch();
-
+  
+  const adminData = useSelector((state) => state.auth.admin);
   const searchTerm = useSelector((state) => state.company.searchTerm);
   const companies = useSelector((state) => state.company.companies);
   const hasError = useSelector((state) => state.company.hasError);
@@ -165,10 +168,24 @@ const Company = () => {
 
   useEffect(() => {
     dispatch(fetchCompanies());
-  }, [dispatch]);
+  
+    // Fetch admin data
+    const email = window.localStorage.getItem('emailForSignIn');
+    if (email) {
+      dispatch(getAdminByEmail(email));
+    }
+  }, [dispatch]);  
+  
 
-  const filteredCompanies = companies.filter(company =>
-    company.insurance_company_name.toLowerCase().includes(searchTerm.toLowerCase())
+  let adminCompanyIds = [];
+  console.log(adminData,'adminData');
+  if (adminData && adminData.company_id) {
+    adminCompanyIds = adminData.company_id.split(',').map(id => parseInt(id));
+  }
+
+  const filteredCompanies = companies.filter(company => 
+    company.insurance_company_name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    adminCompanyIds.includes(company.insurance_company_id) // filter based on admin's company IDs
   );
 
   return (

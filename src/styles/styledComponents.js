@@ -7,8 +7,8 @@ import Checkbox from '@mui/material/Checkbox';
 
 // Icon TableCell with adjusted padding and width
 export const IconTableCell = styled(TableCell)(({ theme }) => ({
-  padding: theme.spacing(0.5, 1),
   width: 'auto', 
+
 }));
 
 // Table Row for the Update Tab with a grey background and bold font

@@ -8,6 +8,11 @@ const instance = axios.create({
   }
 });
 
+// Landing
+export const fetchAdminByEmail = (email) => {
+  return instance.get(`/admins/email/${email}`);
+};
+
 // Employee
 export const fetchEmployeesFromCompany = (companyId) => {
   return instance.get(`/company/${companyId}`);
@@ -38,7 +43,8 @@ export const fetchCompaniesFromApi = () => {
 };
 
 export const uploadCSVData = (csvData, onProgress) => {
-  return instance.post('/api/upload', csvData, {
+  console.log(csvData,'apiCSVDATA');
+  return instance.post('/user/bulk', csvData, {
     headers: {
       'Content-Type': 'text/csv'
     },

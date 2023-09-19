@@ -10,9 +10,7 @@ import {
 import { fetchCompanies } from '../slices/companySlice';
 
 import { processFile } from '../utils/csvUtil';
-import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
-import { ToastContainer } from 'react-toastify';
 
 
 import {
@@ -50,7 +48,6 @@ function Employee() {
   const dispatch = useDispatch();
   const employees = useSelector((state) => state.employee?.employees || defaultEmployees);
   const companies = useSelector((state) => state.company.companies);
-  console.log(companies, 'companies');
   const companyName = useSelector((state) => state.employee.companyName);
   const selectedEmployee = useSelector((state) => state.employee.selectedEmployee);
   // const [isUploadSuccessful, setIsUploadSuccessful] = useState(false);
@@ -67,6 +64,7 @@ function Employee() {
   }, [companyId, dispatch]);
 
 
+  console.log(companies);
   const fileRef = useRef(null);
 
   const filteredEmployees = employees
@@ -100,7 +98,6 @@ function Employee() {
   const toggleEmployeeStatus = (employee) => {
     dispatch(toggleEmployeeStatusThunk(employee.user_id))
       .then((value) => {
-        console.log(value.payload, 'val');
         toast.success('Employee toggle successful');
       })
       .catch(() => {
@@ -122,29 +119,18 @@ function Employee() {
       employees,
       (comparedData) => {
         dispatch(setProcessedCsvData(comparedData));
+        console.log(comparedData, 'comparedData Employee.js');
         toast.success('CSV processed successfully!');
         setIsComparisonDialogOpen(true);
       },
       (error) => {
-        toast.error('Error processing CSV!');
-        console.error(error);
+        toast.error('Error processing CSV!', error);
       }
     );
   };
 
   return (
     <StyledPaper>
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <CompanyName>{companyName}</CompanyName>
       </div>
@@ -199,8 +185,8 @@ function Employee() {
           </TableBody>
         </StyledTable>
       </StyledTableContainer>
-      <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} />
-      {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} />}
+      <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} companies={companies} />
+      {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} companies={companies} />}
       <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData} />
     </StyledPaper>
   );
