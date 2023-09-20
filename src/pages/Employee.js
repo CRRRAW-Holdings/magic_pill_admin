@@ -64,7 +64,6 @@ function Employee() {
   }, [companyId, dispatch]);
 
 
-  console.log(companies);
   const fileRef = useRef(null);
 
   const filteredEmployees = employees
@@ -119,7 +118,6 @@ function Employee() {
       employees,
       (comparedData) => {
         dispatch(setProcessedCsvData(comparedData));
-        console.log(comparedData, 'comparedData Employee.js');
         toast.success('CSV processed successfully!');
         setIsComparisonDialogOpen(true);
       },

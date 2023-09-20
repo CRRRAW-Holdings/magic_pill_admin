@@ -32,7 +32,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
   const disabled = processedCsvData.filter(data => data.action === 'toggle');
 
   const handleApprove = () => {
-    const dataToUpload = [...added, ...edited, ...disabled].filter(item => checkedItems.includes(item.user_id));
+    const dataToUpload = [...added, ...edited, ...disabled].filter(item => checkedItems.includes(item.username));
     dispatch(uploadCSVThunk(dataToUpload))
       .then((action) => {
         if (action.type === 'employee/uploadCSV/fulfilled') {
@@ -51,9 +51,9 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
     else if (tab === 'disabled') items = disabled;
 
     if (selectAll[tab]) {
-      setCheckedItems(prevCheckedItems => prevCheckedItems.filter(id => !items.map(user => user.user_id).includes(id)));
+      setCheckedItems(prevCheckedItems => prevCheckedItems.filter(id => !items.map(user => user.username).includes(id)));
     } else {
-      setCheckedItems(prevCheckedItems => [...new Set([...prevCheckedItems, ...items.map(user => user.user_id)])]);
+      setCheckedItems(prevCheckedItems => [...new Set([...prevCheckedItems, ...items.map(user => user.username)])]);
     }
 
     setSelectAll(prevSelectAll => ({ ...prevSelectAll, [tab]: !prevSelectAll[tab] }));
@@ -77,6 +77,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
             handleSelectAll={handleSelectAll}
             selectAll={selectAll}
             IconComponent={AddIcon}
+            // backgroundColor={theme.palette.success.light}
           />
         )}
 
@@ -88,6 +89,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
             handleSelectAll={handleSelectAll}
             selectAll={selectAll}
             IconComponent={EditIcon}
+            // backgroundColor={theme.palette.warning.main}
           />
         )}
 
@@ -99,6 +101,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
             handleSelectAll={handleSelectAll}
             selectAll={selectAll}
             IconComponent={PersonOffIcon}
+            // backgroundColor={theme.palette.error.dark}
           />
         )}
       </DialogContent>

@@ -68,17 +68,18 @@ const transformEmployee = (employee) => {
   const formattedDOB = new Date(employee.dob).toLocaleDateString('en-GB'); // Converts date to 'day/month/year' format
   return {
     email: employee.email,
-    dob: employee.dob,
+    dob: formattedDOB,
     username: `${employee.email}_${formattedDOB}`, 
     insurance_company_id: employee.insurance_company_id,
-    magic_pill_plan_id: employee.magic_pill_plan_id,
+    plan_name: employee.plan_name,
     is_active: employee.is_active,
     address: employee.address,
-    age: employee.age,
     company: employee.company,
     first_name: employee.first_name,
     last_name: employee.last_name,
-    phone: employee.phone
+    phone: employee.phone,
+    is_dependent: employee.is_dependent,
+    magic_pill_plan_id: employee.magic_pill_plan_id,
   };
 };
 
@@ -104,7 +105,7 @@ const compareFileWithCurrentData = (fileContent, employees) => {
       if (hasDifferences(matchedEmployee, transformedEmployeeFromFile)) {
         results.push({
           action: 'update',
-          user_id: transformedEmployeeFromFile.username,
+          username: transformedEmployeeFromFile.username,
           user_data: transformedEmployeeFromFile
         });
       }
@@ -113,7 +114,7 @@ const compareFileWithCurrentData = (fileContent, employees) => {
     } else {
       results.push({
         action: 'add',
-        user_id: transformedEmployeeFromFile.username,
+        username: transformedEmployeeFromFile.username,
         user_data: transformedEmployeeFromFile
       });
       processedUsernames.push(transformedEmployeeFromFile.username);
@@ -126,7 +127,7 @@ const compareFileWithCurrentData = (fileContent, employees) => {
       const transformedRemainingEmployee = transformEmployee(remainingEmployee);
       results.push({
         action: 'toggle',
-        user_id: transformedRemainingEmployee.username,
+        username: transformedRemainingEmployee.username,
         user_data: transformedRemainingEmployee,
       });
     });

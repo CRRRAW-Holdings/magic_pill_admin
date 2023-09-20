@@ -46,7 +46,7 @@ export const uploadCSVData = (csvData, onProgress) => {
   console.log(csvData,'apiCSVDATA');
   return instance.post('/user/bulk', csvData, {
     headers: {
-      'Content-Type': 'text/csv'
+      'Content-Type': 'application/json'
     },
     onUploadProgress: (progressEvent) => {
       const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);

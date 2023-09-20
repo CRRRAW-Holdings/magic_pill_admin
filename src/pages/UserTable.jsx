@@ -8,8 +8,16 @@ import {
   IconTableCell, HeaderTableRow, StyledCheckbox, StyledTableRow
 } from '../styles/styledComponents';
 
-const UserTable = ({ type, columns, users, handleSelectAll, selectAll, IconComponent }) => (
-  <Card style={{ marginTop: '20px' }}>
+const UserTable = ({ 
+  type, 
+  columns, 
+  users, 
+  handleSelectAll, 
+  selectAll, 
+  IconComponent, 
+  backgroundColor = 'transparent'
+}) => (
+  <Card style={{ marginTop: '20px', backgroundColor: backgroundColor }}>
     <CardContent>
       <Typography variant="h6">
         {`${type.charAt(0).toUpperCase() + type.slice(1)} Users`}
@@ -59,7 +67,8 @@ UserTable.propTypes = {
   users: PropTypes.arrayOf(PropTypes.object).isRequired,
   handleSelectAll: PropTypes.func.isRequired,
   selectAll: PropTypes.objectOf(PropTypes.bool).isRequired,
-  IconComponent: PropTypes.elementType.isRequired
+  IconComponent: PropTypes.elementType.isRequired,
+  backgroundColor: PropTypes.string // Add this new propType
 };
 
 export default UserTable;
