@@ -74,15 +74,15 @@ def bulk_user_operations():
     user_update_mappings = []
     user_toggle_mappings = []
 
-    for user_data in data:
-        action = user_data.get("action")
+    for operation in data:
+        action = operation.get("action")
         
         if action == "add":
-            handle_add_action(user_data, results, user_insert_mappings)
+            handle_add_action(operation, results, user_insert_mappings)
         elif action == "update":
-            handle_update_action(user_data, results, user_update_mappings)
+            handle_update_action(operation, results, user_update_mappings)
         elif action == "toggle":
-            handle_toggle_action(user_data, results, user_toggle_mappings)
+            handle_toggle_action(operation, results, user_toggle_mappings)
         else:
             logging.warning(f"Unknown action received: {action}")
 
@@ -90,32 +90,36 @@ def bulk_user_operations():
 
     return jsonify(results=results)
 
-def handle_add_action(user_data, results, user_insert_mappings):
-    validation_result = validate_user_data(user_data)
+
+def handle_add_action(operation, results, user_insert_mappings):
+    validation_result = validate_user_data(operation["user_data"])
     if "error" in validation_result:
         results.append(validation_result)
     else:
-        user_insert_mappings.append(user_data["user_data"])
+        user_insert_mappings.append(operation["user_data"])
 
-
-def handle_update_action(user_data, results, user_update_mappings):
-    validation_result = validate_user_data(user_data)
+def handle_update_action(operation, results, user_update_mappings):
+    validation_result = validate_user_data(operation["user_data"])
     if "error" in validation_result:
         results.append(validation_result)
     else:
-        user_id = user_data.get("user_id")
-        user_data["user_data"]["id"] = user_id
-        user_update_mappings.append(user_data["user_data"])
+        # Use the username to get the user_id
+        with Session() as session:
+            user = session.query(User).filter_by(username=operation["user_data"]["username"]).first()
+            if user:
+                operation["user_data"]["user_id"] = user.user_id
+                user_update_mappings.append(operation["user_data"])
+            else:
+                results.append({"error": "User Not Found", "message": f"User with username {operation['user_data']['username']} not found."})
 
-
-def handle_toggle_action(user_data, results, user_toggle_mappings):
-    username = user_data.get("username")
-    user = Session.query(User).filter_by(username=username).first()
-    if user:
-        user_toggle_mappings.append({"id": user.user_id, "is_active": False})
-    else:
-        results.append({"error": "User Not Found", "message": f"User with username {username} not found."})
-
+def handle_toggle_action(operation, results, user_toggle_mappings):
+    username = operation.get("username")
+    with Session() as session:
+        user = session.query(User).filter_by(username=username).first()
+        if user:
+            user_toggle_mappings.append({"user_id": user.user_id, "is_active": not user.is_active})
+        else:
+            results.append({"error": "User Not Found", "message": f"User with username {username} not found."})
 
 def perform_bulk_operations(model, results, inserts, updates, toggles):
     bulk_ops = [
@@ -127,7 +131,7 @@ def perform_bulk_operations(model, results, inserts, updates, toggles):
         with Session() as session:
             for ops, message, method in bulk_ops:
                 if ops:
-                    method(model, ops, session=session)  # assuming these methods are session-aware
+                    method(model, ops)  # assuming these methods are session-aware
                     results.extend([{"success": True, "message": f"User {message} successfully"} for _ in ops])
     except IntegrityError as e:
         logging.error(f"Database Integrity Error: {str(e)}")
@@ -148,7 +152,7 @@ def validate_user_data(data):
         "dob": str,
         "company": str,
         "insurance_company_id": int,
-        "magic_pill_plan_id": int,
+        "plan_name": str,
         "is_active": bool,
         "is_dependant": bool
     }
@@ -161,10 +165,10 @@ def validate_user_data(data):
             return {"error": "Bad Request", "message": f"'{field}' should be of type {expected_type.__name__}."}
     
     # Additional validations
-    try:
-        validate_email(data["email"])
-    except EmailNotValidError as e:
-        return {"error": "Bad Request", "message": str(e)}
+    # try:
+    #     validate_email(data["email"])
+    # except EmailNotValidError as e:
+    #     return {"error": "Bad Request", "message": str(e)}
     
     try:
         datetime.strptime(data["dob"], '%Y-%m-%d')
@@ -172,11 +176,16 @@ def validate_user_data(data):
         return {"error": "Bad Request", "message": "Invalid 'dob' format. Expected 'YYYY-MM-DD'."}
 
     with Session() as session:
-        insurance_company = session.query(InsuranceCompany).get(data["insurance_company_id"])
-        magic_pill_plan = session.query(MagicPillPlan).get(data["magic_pill_plan_id"])
+        insurance_company = session.get(InsuranceCompany, data["insurance_company_id"])
+        magic_pill_plan = session.query(MagicPillPlan).filter_by(plan_name=data["plan_name"]).first()
 
-    if not insurance_company or not magic_pill_plan:
-        return {"error": "Not Found", "message": "Insurance company or Magic Pill Plan not found."}
+        if magic_pill_plan:
+            data["magic_pill_plan_id"] = magic_pill_plan.magic_pill_plan_id
+        else:
+            return {"error": "Not Found", "message": "Provided Magic Pill Plan name not found."}
+
+        if not insurance_company:
+            return {"error": "Not Found", "message": "Insurance company not found."}
 
     return {}
 
@@ -198,6 +207,8 @@ def company(company_id):
             "users": [user.serialize_full() for user in users]  # Serialize with all attributes
         }
     ])
+# USER ROUTES
+
 @app.route("/user/add", methods=["POST"])
 def add_user():
     data = request.get_json()
@@ -309,6 +320,19 @@ def get_admin(admin_id):
         return jsonify({"error": "Admin not found"}), 404
     return jsonify(admin.serialize())
 
+
+@app.route("/admins", methods=["POST"])
+def create_admin():
+    data = request.json
+    new_admin = Admin(
+        admin_username=data.get('admin_username'),
+        admin_email=data.get('admin_email'),
+        insurance_company_id=data.get('insurance_company_id')
+    )
+    session.add(new_admin)
+    session.commit()
+    return jsonify(new_admin.serialize()), 201
+
 @app.route("/admins/<int:admin_id>", methods=["PUT"])
 def update_admin(admin_id):
     admin = session.query(Admin).get(admin_id)
@@ -393,5 +417,15 @@ def get_admin_by_email(admin_email):
         })
     else:
         return jsonify({"exists": False})
+    
+
+# Plans
+
+@app.route("/plans", methods=["GET"])
+def get_all_magic_pill_plans():
+    magic_pill_plans = Session.query(MagicPillPlan).all()
+    return jsonify(results=[plan.serialize() for plan in magic_pill_plans])
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3000)

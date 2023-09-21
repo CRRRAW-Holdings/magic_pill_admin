@@ -13,14 +13,14 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import PropTypes from 'prop-types';
 
-function EditEmployeeDialog({ open, onClose, employee, companyId, companies }) {
+function EditEmployeeDialog({ open, onClose, employee, companyId, companies, plans }) {
   const dispatch = useDispatch();
   const [employeeData, setEmployeeData] = useState({
-    username: '',
     email: '',
     insurance_company_id: '',
     magic_pill_plan_id: '',
     is_active: true,
+    is_dependant: false,
     address: '',
     dob: '',
     company: '',
@@ -44,7 +44,7 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies }) {
     const { name, checked } = e.target;
     setEmployeeData(prevState => ({ ...prevState, [name]: checked }));
   };
-  
+
 
   const handleSubmit = () => {
     dispatch(updateEmployeeThunk({ companyId, employeeData }))
@@ -64,16 +64,6 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies }) {
       <DialogTitle>Edit Employee</DialogTitle>
       <DialogContent>
         <TextField
-          autoFocus
-          margin="dense"
-          name="username"
-          label="Username"
-          type="text"
-          fullWidth
-          value={employeeData.username}
-          onChange={handleChange}
-        />
-        <TextField
           margin="dense"
           name="email"
           label="Email Address"
@@ -92,6 +82,17 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies }) {
             />
           }
           label="Is Active"
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={employeeData.is_dependant}
+              onChange={handleCheckboxChange}
+              name="is_dependant"
+              color="primary"
+            />
+          }
+          label="Is Dependant"
         />
         <TextField
           margin="dense"
@@ -121,6 +122,7 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies }) {
           fullWidth
           name="insurance_company_id"
           margin="dense"
+          disabled
         >
           <MenuItem disabled value="">
             <em>Select a company</em>
@@ -128,6 +130,24 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies }) {
           {companies.map(company => (
             <MenuItem key={company.insurance_company_id} value={company.insurance_company_id}>
               {company.insurance_company_name}
+            </MenuItem>
+          ))}
+        </Select>
+
+        <Select
+          value={employeeData.magic_pill_plan_id}
+          onChange={handleChange}
+          displayEmpty
+          fullWidth
+          name="magic_pill_plan_id"
+          margin="dense"
+        >
+          <MenuItem disabled value="">
+            <em>Select a plan</em>
+          </MenuItem>
+          {plans.map(plan => (
+            <MenuItem key={plan.magic_pill_plan_id} value={plan.magic_pill_plan_id}>
+              {plan.plan_name}
             </MenuItem>
           ))}
         </Select>
@@ -158,15 +178,6 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies }) {
           value={employeeData.phone}
           onChange={handleChange}
         />
-        <TextField
-          margin="dense"
-          name="magic_pill_plan_id"
-          label="Magic Pill Plan ID"
-          type="text"
-          fullWidth
-          value={employeeData.magic_pill_plan_id}
-          disabled
-        />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">
@@ -184,14 +195,20 @@ EditEmployeeDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   employee: PropTypes.object.isRequired,
   companyId: PropTypes.string.isRequired,
-  onClose: PropTypes.func.isRequired,
   companies: PropTypes.arrayOf(
     PropTypes.shape({
       insurance_company_id: PropTypes.number.isRequired,
       insurance_company_name: PropTypes.string.isRequired,
       insurance_company_phone_number: PropTypes.string
     })
-  ).isRequired
+  ).isRequired,
+  plans: PropTypes.arrayOf(
+    PropTypes.shape({
+      magic_pill_plan_id: PropTypes.number.isRequired,
+      plan_name: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  onClose: PropTypes.func.isRequired,
 };
 
 export default EditEmployeeDialog;

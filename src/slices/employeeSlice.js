@@ -6,6 +6,7 @@ export const fetchEmployees = createAsyncThunk(
   async (companyId, { rejectWithValue }) => {
     try {
       const response = await fetchEmployeesFromCompany(companyId);
+      console.log(response,'fetchhhh');
       const companyData = response.data.results[0].company;
       const users = response.data.results[0].users;
 
@@ -163,7 +164,6 @@ const employeeSlice = createSlice({
         state.errorMessage = '';
       })
       .addCase(addEmployeeThunk.fulfilled, (state, action) => {
-        console.log(action.payload);
         state.employees.push(action.payload);
       })
       .addCase(addEmployeeThunk.rejected, (state, action) => {

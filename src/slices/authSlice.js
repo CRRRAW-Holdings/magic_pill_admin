@@ -51,7 +51,6 @@ export const signInWithEmailLinkAction = createAsyncThunk(
 
       const result = await signInWithEmailLink(auth, email, emailLink);
       window.localStorage.removeItem('emailForSignIn');
-      console.log(result, 'result');
       return result.admin;
     } catch (error) {
       return rejectWithValue(error.message);

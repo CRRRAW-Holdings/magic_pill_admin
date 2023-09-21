@@ -178,7 +178,6 @@ const Company = () => {
   
 
   let adminCompanyIds = [];
-  console.log(adminData,'adminData');
   if (adminData && adminData.company_id) {
     adminCompanyIds = adminData.company_id.split(',').map(id => parseInt(id));
   }

@@ -23,7 +23,7 @@ const parseCSV = (content) => {
 };
 
 const parseXLSX = (content) => {
-  const workbook = XLSX.read(content, { type: 'binary' });
+  const workbook = XLSX.read(content, { type: 'binary', cellDates: true });
   const firstSheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[firstSheetName];
   return XLSX.utils.sheet_to_json(worksheet);
@@ -64,12 +64,21 @@ const readFileContent = (file, onSuccess, onError) => {
   }
 };
 
+const formatDateToYYYYMMDD = (dateString) => {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
 const transformEmployee = (employee) => {
-  const formattedDOB = new Date(employee.dob).toLocaleDateString('en-GB'); // Converts date to 'day/month/year' format
+  const formattedDOB = formatDateToYYYYMMDD(employee.dob);
   return {
     email: employee.email,
     dob: formattedDOB,
-    username: `${employee.email}_${formattedDOB}`, 
+    username: `${employee.email}_${formattedDOB}_${employee.first_name}`,
     insurance_company_id: employee.insurance_company_id,
     plan_name: employee.plan_name,
     is_active: employee.is_active,
@@ -78,10 +87,10 @@ const transformEmployee = (employee) => {
     first_name: employee.first_name,
     last_name: employee.last_name,
     phone: employee.phone,
-    is_dependent: employee.is_dependent,
-    magic_pill_plan_id: employee.magic_pill_plan_id,
+    is_dependant: employee.is_dependant,
   };
 };
+
 
 const hasDifferences = (oldEmployee, newEmployee) => {
   for (const key in oldEmployee) {
@@ -99,7 +108,7 @@ const compareFileWithCurrentData = (fileContent, employees) => {
   fileContent.forEach(fileEmployee => {
     const transformedEmployeeFromFile = transformEmployee(fileEmployee);
 
-    const matchedEmployee = employees.find(emp => emp.email === transformedEmployeeFromFile.email);
+    const matchedEmployee = employees.find(emp => emp.username === transformedEmployeeFromFile.username);
 
     if (matchedEmployee) {
       if (hasDifferences(matchedEmployee, transformedEmployeeFromFile)) {
@@ -109,6 +118,15 @@ const compareFileWithCurrentData = (fileContent, employees) => {
           user_data: transformedEmployeeFromFile
         });
       }
+
+      if (transformedEmployeeFromFile.is_active === false) {
+        results.push({
+          action: 'toggle',
+          username: transformedEmployeeFromFile.username,
+          user_data: transformedEmployeeFromFile
+        });
+      }
+
       processedUsernames.push(transformedEmployeeFromFile.username);
       employees = employees.filter(emp => emp.username !== transformedEmployeeFromFile.username);
     } else {
@@ -121,22 +139,10 @@ const compareFileWithCurrentData = (fileContent, employees) => {
     }
   });
 
-  employees
-    .filter(emp => !processedUsernames.includes(emp.username))
-    .forEach(remainingEmployee => {
-      const transformedRemainingEmployee = transformEmployee(remainingEmployee);
-      results.push({
-        action: 'toggle',
-        username: transformedRemainingEmployee.username,
-        user_data: transformedRemainingEmployee,
-      });
-    });
-
+  console.log('finalEmployeeBeforeSend', results);
+  console.log('oldEmployees', employees);
   return results;
 };
-
-// ... Rest of the code remains the same
-
 
 export const processFile = (file, employees, onSuccess, onError) => {
   if (!isFileValid(file)) {
@@ -147,6 +153,7 @@ export const processFile = (file, employees, onSuccess, onError) => {
   readFileContent(
     file,
     (parsedData) => {
+      console.log(parsedData, 'parsedData');
       const comparedData = compareFileWithCurrentData(parsedData, employees);
       onSuccess(comparedData);
     },

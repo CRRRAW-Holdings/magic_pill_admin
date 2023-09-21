@@ -8,6 +8,7 @@ import {
   setProcessedCsvData,
 } from '../slices/employeeSlice';
 import { fetchCompanies } from '../slices/companySlice';
+import { fetchPlans } from '../slices/planSlice'; // Import fetchPlans
 
 import { processFile } from '../utils/csvUtil';
 import { toast } from 'react-toastify';
@@ -46,11 +47,13 @@ const defaultEmployees = [];
 function Employee() {
   const { id: companyId } = useParams();
   const dispatch = useDispatch();
+
   const employees = useSelector((state) => state.employee?.employees || defaultEmployees);
   const companies = useSelector((state) => state.company.companies);
+  const plans = useSelector((state) => state.plan.plans);
   const companyName = useSelector((state) => state.employee.companyName);
   const selectedEmployee = useSelector((state) => state.employee.selectedEmployee);
-  // const [isUploadSuccessful, setIsUploadSuccessful] = useState(false);
+  
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [isEditEmployeeDialogOpen, setIsEditEmployeeDialogOpen] = useState(false);
   const [isComparisonDialogOpen, setIsComparisonDialogOpen] = useState(false);
@@ -60,7 +63,7 @@ function Employee() {
   useEffect(() => {
     dispatch(fetchEmployees(companyId));
     dispatch(fetchCompanies());
-    // dispatch(fetchPlans());
+    dispatch(fetchPlans());
   }, [companyId, dispatch]);
 
 
@@ -183,9 +186,9 @@ function Employee() {
           </TableBody>
         </StyledTable>
       </StyledTableContainer>
-      <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} companies={companies} />
-      {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} companies={companies} />}
-      <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData} />
+      <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} companies={companies} plans={plans} />
+      {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} companies={companies} plans={plans}/>}
+      <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData} companyId={companyId} companies={companies} plans={plans}/>
     </StyledPaper>
   );
 }

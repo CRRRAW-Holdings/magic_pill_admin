@@ -13,7 +13,7 @@ import PersonOffIcon from '@mui/icons-material/PersonOff';
 import UserTable from './UserTable';
 
 const addTabColumns = [
-  'email', 'insurance_company_id', 'magic_pill_plan_id', 'is_active',
+  'email', 'plan_name', 'is_active',
   'address', 'dob', 'age', 'company', 'first_name', 'last_name', 'phone'
 ];
 
@@ -21,7 +21,7 @@ const updateTabColumns = addTabColumns;
 
 const disableTabColumns = ['email', 'dob', 'username'];
 
-const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
+const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companies, plans }) => {
   const dispatch = useDispatch();
   const [selectedTab, setSelectedTab] = useState(0);
   const [checkedItems, setCheckedItems] = useState([]);
@@ -125,7 +125,21 @@ const ComparisonDialog = ({ open, onClose, processedCsvData }) => {
 ComparisonDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  processedCsvData: PropTypes.arrayOf(PropTypes.object).isRequired
+  processedCsvData: PropTypes.arrayOf(PropTypes.object).isRequired,
+  companyId: PropTypes.string.isRequired,
+  companies: PropTypes.arrayOf(
+    PropTypes.shape({
+      insurance_company_id: PropTypes.number.isRequired,
+      insurance_company_name: PropTypes.string.isRequired,
+      insurance_company_phone_number: PropTypes.string
+    })
+  ).isRequired,
+  plans: PropTypes.arrayOf(
+    PropTypes.shape({
+      magic_pill_plan_id: PropTypes.number.isRequired,
+      plan_name: PropTypes.string.isRequired,
+    })
+  ).isRequired,
 };
 
 export default ComparisonDialog;

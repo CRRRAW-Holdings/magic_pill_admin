@@ -42,6 +42,10 @@ export const fetchCompaniesFromApi = () => {
   return instance.get('/company');
 };
 
+export const fetchPlansFromApi = () => {
+  return instance.get('/plans');
+};
+
 export const uploadCSVData = (csvData, onProgress) => {
   console.log(csvData,'apiCSVDATA');
   return instance.post('/user/bulk', csvData, {
