@@ -164,17 +164,7 @@ def validate_user_data(data):
         if not isinstance(value, expected_type):
             return {"error": "Bad Request", "message": f"'{field}' should be of type {expected_type.__name__}."}
     
-    # Additional validations
-    # try:
-    #     validate_email(data["email"])
-    # except EmailNotValidError as e:
-    #     return {"error": "Bad Request", "message": str(e)}
     
-    try:
-        datetime.strptime(data["dob"], '%Y-%m-%d')
-    except ValueError:
-        return {"error": "Bad Request", "message": "Invalid 'dob' format. Expected 'YYYY-MM-DD'."}
-
     with Session() as session:
         insurance_company = session.get(InsuranceCompany, data["insurance_company_id"])
         magic_pill_plan = session.query(MagicPillPlan).filter_by(plan_name=data["plan_name"]).first()
@@ -188,7 +178,6 @@ def validate_user_data(data):
             return {"error": "Not Found", "message": "Insurance company not found."}
 
     return {}
-
 
 @app.route("/company", methods=["GET"])
 def get_all_companies():
@@ -246,16 +235,14 @@ def add_user():
 	is_dependent=data["is_dependent"]
     )
 
-    # Add to the session and attempt to commit
-    Session.add(new_user)
     try:
-        Session.commit()
+        with Session() as session:
+            session.add(new_user)
+            session.commit()
         return jsonify(results=[{"success": True, "message": "User added successfully"}])
     except exc.IntegrityError as e:
-        Session.rollback()
         return jsonify(results=[{"error": "Database Integrity Error", "message": str(e)}]), 500
     except exc.SQLAlchemyError as e:
-        Session.rollback()
         return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
 
 
@@ -286,20 +273,19 @@ def update_user(user_id):
         Session.rollback()
         return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
 
-
 @app.route("/user/toggle/<user_id>", methods=["POST"])
 def toggle_user(user_id):
-    user = Session.query(User).get(user_id)
+    with Session() as session:
+        user = session.query(User).get(user_id)
     if not user:
         return jsonify(results=[{"error": "Not Found", "message": "User not found."}]), 404
     user.is_active = not user.is_active
     try:
-        Session.commit()
+        session.commit()
+        return jsonify(results=[{"success": True, "message": "User status toggled successfully"}])
     except exc.SQLAlchemyError as e:
-        Session.rollback()
         return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
-    return jsonify(results=[{"success": True, "message": "User status toggled successfully"}])
-
+    
 @app.route("/user/<user_id>", methods=["GET"])
 def get_user(user_id):
     user = Session.query(User).get(user_id)
@@ -310,17 +296,17 @@ def get_user(user_id):
 # ADMIN ROUTES
 @app.route("/admins", methods=["GET"])
 def get_all_admins():
-    admins = session.query(Admin).all()
+    with Session() as session:
+        admins = session.query(Admin).all()
     return jsonify([admin.serialize() for admin in admins])
 
 @app.route("/admins/<int:admin_id>", methods=["GET"])
 def get_admin(admin_id):
-    admin = session.query(Admin).get(admin_id)
+    with Session() as session:
+        admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     return jsonify(admin.serialize())
-
-
 @app.route("/admins", methods=["POST"])
 def create_admin():
     data = request.json
@@ -332,10 +318,10 @@ def create_admin():
     session.add(new_admin)
     session.commit()
     return jsonify(new_admin.serialize()), 201
-
 @app.route("/admins/<int:admin_id>", methods=["PUT"])
 def update_admin(admin_id):
-    admin = session.query(Admin).get(admin_id)
+    with Session() as session:
+        admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     data = request.json
@@ -347,7 +333,8 @@ def update_admin(admin_id):
 
 @app.route("/admins/<int:admin_id>", methods=["DELETE"])
 def delete_admin(admin_id):
-    admin = session.query(Admin).get(admin_id)
+    with Session() as session:
+        admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     session.delete(admin)
@@ -357,7 +344,8 @@ def delete_admin(admin_id):
 
 @app.route("/admin/<int:admin_id>/insurance-companies", methods=["GET"])
 def get_insurance_companies_by_admin(admin_id):
-    admin = session.query(Admin).get(admin_id)
+    with Session() as session:
+        admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     # Assuming a relationship exists in your Admin model named `insurance_companies`
@@ -367,7 +355,8 @@ def get_insurance_companies_by_admin(admin_id):
 
 @app.route("/admin/<int:admin_id>/add-insurance-company", methods=["POST"])
 def add_insurance_company_to_admin(admin_id):
-    admin = session.query(Admin).get(admin_id)
+    with Session() as session:
+        admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     
@@ -385,7 +374,8 @@ def add_insurance_company_to_admin(admin_id):
 
 @app.route("/admin/<int:admin_id>/remove-insurance-company", methods=["POST"])
 def remove_insurance_company_from_admin(admin_id):
-    admin = session.query(Admin).get(admin_id)
+    with Session() as session:
+        admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     
@@ -405,7 +395,8 @@ def remove_insurance_company_from_admin(admin_id):
 
 @app.route("/admins/email/<admin_email>", methods=["GET"])
 def get_admin_by_email(admin_email):
-    admin = Session.query(Admin).filter_by(admin_email=admin_email).first()
+    with Session() as session:
+        admin = session.query(Admin).filter_by(admin_email=admin_email).first()
     
     if admin:
         return jsonify({
@@ -418,9 +409,7 @@ def get_admin_by_email(admin_email):
     else:
         return jsonify({"exists": False})
     
-
-# Plans
-
+    # Plans
 @app.route("/plans", methods=["GET"])
 def get_all_magic_pill_plans():
     magic_pill_plans = Session.query(MagicPillPlan).all()

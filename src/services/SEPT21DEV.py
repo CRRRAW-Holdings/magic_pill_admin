@@ -13,9 +13,8 @@ from models import Admin
 from datetime import datetime
 import logging
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from email_validator import validate_email, EmailNotValidError
 
-
-logging.basicConfig(level=logging.ERROR, filename='error_log.log')
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
@@ -61,13 +60,6 @@ def not_found_error(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return jsonify(error="Internal Server Error", message=str(e)), 500
-
-def write_changelog(action, user):
-    """
-    Writes changes about users into a changelog file.
-    """
-    with open(changelog_folder + "/changelog.txt", "a") as file:
-        file.write(f"{datetime.utcnow()} - {action} user with ID {user.id}, Username: {user.username}\n")
 
 # BULK UPLOAD
 
@@ -169,7 +161,6 @@ def validate_user_data(data):
         if not isinstance(value, expected_type):
             return {"error": "Bad Request", "message": f"'{field}' should be of type {expected_type.__name__}."}
     
-    
     with Session() as session:
         insurance_company = session.query(InsuranceCompany).get(data["insurance_company_id"])
         magic_pill_plan = session.query(MagicPillPlan).get(data["magic_pill_plan_id"])
@@ -199,7 +190,6 @@ def company(company_id):
             "users": [user.serialize_full() for user in users]  # Serialize with all attributes
         }
     ])
-
 @app.route("/user/add", methods=["POST"])
 def add_user():
     data = request.get_json()
@@ -237,17 +227,16 @@ def add_user():
 	is_dependent=data["is_dependent"]
     )
 
+    # Add to the session and attempt to commit
+    Session.add(new_user)
     try:
-        with Session() as session:
-            session.add(new_user)
-            session.commit()
-            write_changelog("Added", new_user)
+        Session.commit()
         return jsonify(results=[{"success": True, "message": "User added successfully"}])
     except exc.IntegrityError as e:
-        logging.error(f"Integrity Error: {str(e)}")
+        Session.rollback()
         return jsonify(results=[{"error": "Database Integrity Error", "message": str(e)}]), 500
     except exc.SQLAlchemyError as e:
-        logging.error(f"Database Error: {str(e)}")
+        Session.rollback()
         return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
 
 
@@ -273,28 +262,25 @@ def update_user(user_id):
 
     try:
         Session.commit()
-        write_changelog("Updated", user)  # Logging the change
         return jsonify(results=[{"success": True, "message": "User updated successfully", "user": user.serialize_full()}])
     except exc.SQLAlchemyError as e:
         Session.rollback()
-        logging.error(f"Database Error: {str(e)}")  # Proper error logging
         return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
+
 
 @app.route("/user/toggle/<user_id>", methods=["POST"])
 def toggle_user(user_id):
-    with Session() as session:
-        user = session.query(User).get(user_id)
+    user = Session.query(User).get(user_id)
     if not user:
         return jsonify(results=[{"error": "Not Found", "message": "User not found."}]), 404
     user.is_active = not user.is_active
     try:
-            session.commit()
-            write_changelog("Toggled", user)
-            return jsonify(results=[{"success": True, "message": "User status toggled successfully"}])
+        Session.commit()
     except exc.SQLAlchemyError as e:
-            logging.error(f"Database Error: {str(e)}")
-            return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
-    
+        Session.rollback()
+        return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
+    return jsonify(results=[{"success": True, "message": "User status toggled successfully"}])
+
 @app.route("/user/<user_id>", methods=["GET"])
 def get_user(user_id):
     user = Session.query(User).get(user_id)
@@ -305,22 +291,19 @@ def get_user(user_id):
 # ADMIN ROUTES
 @app.route("/admins", methods=["GET"])
 def get_all_admins():
-    with Session() as session:
-        admins = session.query(Admin).all()
+    admins = session.query(Admin).all()
     return jsonify([admin.serialize() for admin in admins])
 
 @app.route("/admins/<int:admin_id>", methods=["GET"])
 def get_admin(admin_id):
-    with Session() as session:
-        admin = session.query(Admin).get(admin_id)
+    admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     return jsonify(admin.serialize())
 
 @app.route("/admins/<int:admin_id>", methods=["PUT"])
 def update_admin(admin_id):
-    with Session() as session:
-        admin = session.query(Admin).get(admin_id)
+    admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     data = request.json
@@ -332,8 +315,7 @@ def update_admin(admin_id):
 
 @app.route("/admins/<int:admin_id>", methods=["DELETE"])
 def delete_admin(admin_id):
-    with Session() as session:
-        admin = session.query(Admin).get(admin_id)
+    admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     session.delete(admin)
@@ -343,8 +325,7 @@ def delete_admin(admin_id):
 
 @app.route("/admin/<int:admin_id>/insurance-companies", methods=["GET"])
 def get_insurance_companies_by_admin(admin_id):
-    with Session() as session:
-        admin = session.query(Admin).get(admin_id)
+    admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     # Assuming a relationship exists in your Admin model named `insurance_companies`
@@ -354,8 +335,7 @@ def get_insurance_companies_by_admin(admin_id):
 
 @app.route("/admin/<int:admin_id>/add-insurance-company", methods=["POST"])
 def add_insurance_company_to_admin(admin_id):
-    with Session() as session:
-        admin = session.query(Admin).get(admin_id)
+    admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     
@@ -373,8 +353,7 @@ def add_insurance_company_to_admin(admin_id):
 
 @app.route("/admin/<int:admin_id>/remove-insurance-company", methods=["POST"])
 def remove_insurance_company_from_admin(admin_id):
-    with Session() as session:
-        admin = session.query(Admin).get(admin_id)
+    admin = session.query(Admin).get(admin_id)
     if admin is None:
         return jsonify({"error": "Admin not found"}), 404
     
@@ -394,8 +373,7 @@ def remove_insurance_company_from_admin(admin_id):
 
 @app.route("/admins/email/<admin_email>", methods=["GET"])
 def get_admin_by_email(admin_email):
-    with Session() as session:
-        admin = session.query(Admin).filter_by(admin_email=admin_email).first()
+    admin = Session.query(Admin).filter_by(admin_email=admin_email).first()
     
     if admin:
         return jsonify({
@@ -407,5 +385,15 @@ def get_admin_by_email(admin_email):
         })
     else:
         return jsonify({"exists": False})
+    
+
+# Plans
+
+@app.route("/plans", methods=["GET"])
+def get_all_magic_pill_plans():
+    magic_pill_plans = Session.query(MagicPillPlan).all()
+    return jsonify(results=[plan.serialize() for plan in magic_pill_plans])
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3000)
