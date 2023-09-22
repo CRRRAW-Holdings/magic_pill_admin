@@ -5,8 +5,9 @@ import {
   Card, CardContent
 } from '@mui/material';
 import {
-  IconTableCell, HeaderTableRow, StyledCheckbox, StyledTableRow
-} from '../styles/styledComponents';
+  IconTableCell, HeaderTableRow, StyledTableRow
+} from '../styles/tableStyles';
+import { StyledCheckbox } from '../styles/styledComponents';
 
 const UserTable = ({ 
   type, 

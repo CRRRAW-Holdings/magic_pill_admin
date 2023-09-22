@@ -9,6 +9,12 @@ import Button from '@mui/material/Button';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSearchTerm, fetchCompanies } from '../slices/companySlice';
 import { getAdminByEmail } from '../slices/authSlice';
+import {
+  selectSearchTerm,
+  selectHasError,
+  selectErrorMessage,
+  selectFilteredCompanies
+} from '../selectors';
 
 
 // Wrapper styles
@@ -160,11 +166,9 @@ const ErrorMessage = styled.div`
 const Company = () => {
   const dispatch = useDispatch();
   
-  const adminData = useSelector((state) => state.auth.admin);
-  const searchTerm = useSelector((state) => state.company.searchTerm);
-  const companies = useSelector((state) => state.company.companies);
-  const hasError = useSelector((state) => state.company.hasError);
-  const errorMessage = useSelector((state) => state.company.errorMessage);
+  const searchTerm = useSelector(selectSearchTerm);
+  const hasError = useSelector(selectHasError);
+  const errorMessage = useSelector(selectErrorMessage);
 
   useEffect(() => {
     dispatch(fetchCompanies());
@@ -177,15 +181,8 @@ const Company = () => {
   }, [dispatch]);  
   
 
-  let adminCompanyIds = [];
-  if (adminData && adminData.company_id) {
-    adminCompanyIds = adminData.company_id.split(',').map(id => parseInt(id));
-  }
 
-  const filteredCompanies = companies.filter(company => 
-    company.insurance_company_name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    adminCompanyIds.includes(company.insurance_company_id) // filter based on admin's company IDs
-  );
+  const filteredCompanies = useSelector(selectFilteredCompanies);
 
   return (
     <Wrapper>

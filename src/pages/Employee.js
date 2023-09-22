@@ -20,26 +20,14 @@ import {
   TableRow,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
-import {
-  StyledPaper,
-  CompanyName,
-  AddEmployeeButton,
-  UploadCSVButton,
-  StyledTableContainer,
-  StyledTable,
-  EmployeeRow,
-  StyledTableCell,
-  HeaderCell,
-  EditButton,
-  DisableButton,
-  EnableButton,
-  LockedTooltip,
-  StyledSearchBar,
-} from '../styles/styledComponents';
+
 
 import AddEmployeeDialog from './AddEmployeeDialog';
 import EditEmployeeDialog from './EditEmployeeDialog';
 import ComparisonDialog from './ComparisonDialog';
+import { CompanyName, LockedTooltip, StyledPaper, StyledSearchBar } from '../styles/styledComponents';
+import { EmployeeRow, HeaderCell, StyledTable, StyledTableCell, StyledTableContainer } from '../styles/tableStyles';
+import { AddEmployeeButton, DisableButton, EditButton, EnableButton, UploadCSVButton } from '../styles/buttonComponents';
 
 
 const defaultEmployees = [];
@@ -48,26 +36,34 @@ function Employee() {
   const { id: companyId } = useParams();
   const dispatch = useDispatch();
 
+  // Data State
   const employees = useSelector((state) => state.employee?.employees || defaultEmployees);
   const companies = useSelector((state) => state.company.companies);
   const plans = useSelector((state) => state.plan.plans);
   const companyName = useSelector((state) => state.employee.companyName);
   const selectedEmployee = useSelector((state) => state.employee.selectedEmployee);
-  
+  const processedCsvData = useSelector((state) => state.employee.processedCsvData) || [];
+
+  //Table State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');  // Add this line to track sort order
+
+  //Dialog State
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [isEditEmployeeDialogOpen, setIsEditEmployeeDialogOpen] = useState(false);
   const [isComparisonDialogOpen, setIsComparisonDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
-  const processedCsvData = useSelector((state) => state.employee.processedCsvData) || [];
   useEffect(() => {
     dispatch(fetchEmployees(companyId));
     dispatch(fetchCompanies());
     dispatch(fetchPlans());
   }, [companyId, dispatch]);
 
-
   const fileRef = useRef(null);
+
+  const toggleSort = () => {
+    setSortOrder(prevOrder => prevOrder === 'asc' ? 'desc' : 'asc');
+  };
 
   const filteredEmployees = employees
     .filter(employee => {
@@ -151,9 +147,13 @@ function Employee() {
         <StyledTable>
           <TableHead>
             <TableRow>
-              <HeaderCell>Username</HeaderCell>
+              <HeaderCell>First Name</HeaderCell>
+              <HeaderCell>Last Name</HeaderCell>
               <HeaderCell>Email</HeaderCell>
               <HeaderCell>Plan</HeaderCell>
+              <HeaderCell>
+                <span onClick={toggleSort} style={{ cursor: 'pointer' }}>Status {sortOrder === 'asc' ? '↑' : '↓'}</span>
+              </HeaderCell>
               <HeaderCell>Actions</HeaderCell>
             </TableRow>
           </TableHead>
@@ -162,19 +162,30 @@ function Employee() {
               <EmployeeRow key={employee.user_id} isActive={employee.is_active}>
                 <StyledTableCell>
                   {employee.is_active ? (
-                    employee.username
+                    employee.first_name
                   ) : (
                     <LockedTooltip title="Employee is disabled">
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                         <LockIcon color="error" style={{ marginRight: '8px' }} />
-                        {employee.username}
+                        {employee.first_name}
+                      </div>
+                    </LockedTooltip>
+                  )}
+                </StyledTableCell>
+                <StyledTableCell>
+                  {employee.is_active ? (
+                    employee.last_name
+                  ) : (
+                    <LockedTooltip title="Employee is disabled">
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <LockIcon color="error" style={{ marginRight: '8px' }} />
+                        {employee.last_name}
                       </div>
                     </LockedTooltip>
                   )}
                 </StyledTableCell>
                 <StyledTableCell>{employee.email}</StyledTableCell>
                 <StyledTableCell>{employee.magic_pill_plan?.plan_name}</StyledTableCell>
-
                 <StyledTableCell>
                   <EditButton variant="contained" onClick={() => editEmployee(employee)}>Edit</EditButton>
                   {employee.is_active ? (
@@ -189,8 +200,8 @@ function Employee() {
         </StyledTable>
       </StyledTableContainer>
       <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} companies={companies} plans={plans} />
-      {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} companies={companies} plans={plans}/>}
-      <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData} companyId={companyId} companies={companies} plans={plans}/>
+      {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} companies={companies} plans={plans} />}
+      <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData} companyId={companyId} companies={companies} plans={plans} />
     </StyledPaper>
   );
 }

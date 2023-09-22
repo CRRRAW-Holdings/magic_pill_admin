@@ -7,7 +7,7 @@ USER
 username
 
 UPDATE public.users
-SET username = email || '_' || dob;
+SET username = email || '_' || dob  || '_' || insurance_company_id;
 
 
 
