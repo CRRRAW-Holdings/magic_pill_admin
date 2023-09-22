@@ -1,5 +1,9 @@
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
+import {
+  getPlanIdFromName,
+  getCompanyNameFromInsuranceId,
+} from './mappingUtils';
 
 const isValidFileType = (fileName) => {
   return /.csv$/i.test(fileName) || /\.xls(x)?$/i.test(fileName);
@@ -73,27 +77,41 @@ const formatDateToYYYYMMDD = (dateString) => {
   return `${year}-${month}-${day}`;
 };
 
-const transformEmployee = (employee) => {
-  const formattedDOB = formatDateToYYYYMMDD(employee.dob);
+const transformEmployee = (employee, companies, plans) => {
+  const { email, dob, first_name, insurance_company_id, plan_name, is_active, address, last_name, phone, is_dependant } = employee;
+  const formattedDOB = formatDateToYYYYMMDD(dob);
   return {
-    email: employee.email,
+    email: email,
     dob: formattedDOB,
-    username: `${employee.email}_${formattedDOB}_${employee.first_name}`,
-    insurance_company_id: employee.insurance_company_id,
-    plan_name: employee.plan_name,
-    is_active: employee.is_active,
-    address: employee.address,
-    company: employee.company,
-    first_name: employee.first_name,
-    last_name: employee.last_name,
-    phone: employee.phone,
-    is_dependant: employee.is_dependant,
+    username: `${email}_${formattedDOB}_${insurance_company_id}`,
+    insurance_company_id: insurance_company_id,
+    magic_pill_plan_id: getPlanIdFromName(plan_name, plans),
+    is_active: is_active,
+    address: address,
+    company: getCompanyNameFromInsuranceId(insurance_company_id, companies),
+    first_name: first_name,
+    last_name: last_name,
+    phone: phone,
+    is_dependant: is_dependant,
   };
 };
 
+const required_fields = [
+  'username',
+  'email',
+  'first_name',
+  'insurance_company_id',
+  'magic_pill_plan_id',
+  'last_name',
+  'phone',
+  'address',
+  'dob',
+  'is_active',
+  'is_dependant'
+];
 
 const hasDifferences = (oldEmployee, newEmployee) => {
-  for (const key in oldEmployee) {
+  for (const key of required_fields) {
     if (oldEmployee[key] !== newEmployee[key]) {
       return true;
     }
@@ -101,34 +119,51 @@ const hasDifferences = (oldEmployee, newEmployee) => {
   return false;
 };
 
-const compareFileWithCurrentData = (fileContent, employees) => {
+const compareFileWithCurrentData = (fileContent, employees, companies, plans) => {
   let results = [];
   let processedUsernames = [];
 
   fileContent.forEach(fileEmployee => {
-    const transformedEmployeeFromFile = transformEmployee(fileEmployee);
+    const transformedEmployeeFromFile = transformEmployee(fileEmployee, companies, plans);
 
-    const matchedEmployee = employees.find(emp => emp.username === transformedEmployeeFromFile.username);
+    const matchedEmployees = employees.filter(emp =>
+      emp.email === transformedEmployeeFromFile.email &&
+      emp.insurance_company_id === transformedEmployeeFromFile.insurance_company_id &&
+      emp.dob === transformedEmployeeFromFile.dob
+    );
 
-    if (matchedEmployee) {
-      if (hasDifferences(matchedEmployee, transformedEmployeeFromFile)) {
+    if (matchedEmployees.length === 1) {
+      const matchedEmployee = matchedEmployees[0];
+
+      if (matchedEmployee.first_name === transformedEmployeeFromFile.first_name && matchedEmployee.dob === transformedEmployeeFromFile.dob) {
+        if (hasDifferences(matchedEmployee, transformedEmployeeFromFile)) {
+          results.push({
+            action: 'update',
+            user_data: {
+              ...transformedEmployeeFromFile,
+              user_id: matchedEmployee.user_id
+            }
+          });
+        }
+
+        if (transformedEmployeeFromFile.is_active === false) {
+          results.push({
+            action: 'toggle',
+            user_data: {
+              ...transformedEmployeeFromFile,
+              user_id: matchedEmployee.user_id
+            }
+          });
+        }
+      } else {
         results.push({
-          action: 'update',
-          username: transformedEmployeeFromFile.username,
-          user_data: transformedEmployeeFromFile
-        });
-      }
-
-      if (transformedEmployeeFromFile.is_active === false) {
-        results.push({
-          action: 'toggle',
-          username: transformedEmployeeFromFile.username,
-          user_data: transformedEmployeeFromFile
+          action: 'add',
+          user_data: transformedEmployeeFromFile,
         });
       }
 
       processedUsernames.push(transformedEmployeeFromFile.username);
-      employees = employees.filter(emp => emp.username !== transformedEmployeeFromFile.username);
+      employees = employees.filter(emp => emp.username !== matchedEmployee.username);
     } else {
       results.push({
         action: 'add',
@@ -144,7 +179,9 @@ const compareFileWithCurrentData = (fileContent, employees) => {
   return results;
 };
 
-export const processFile = (file, employees, onSuccess, onError) => {
+
+
+export const processFile = (file, employees, companies, plans, onSuccess, onError) => {
   if (!isFileValid(file)) {
     onError('Invalid file type or size. Max allowed size: 25MB');
     return;
@@ -154,7 +191,7 @@ export const processFile = (file, employees, onSuccess, onError) => {
     file,
     (parsedData) => {
       console.log(parsedData, 'parsedData');
-      const comparedData = compareFileWithCurrentData(parsedData, employees);
+      const comparedData = compareFileWithCurrentData(parsedData, employees, companies, plans);
       onSuccess(comparedData);
     },
     onError

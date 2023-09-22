@@ -119,6 +119,8 @@ function Employee() {
     processFile(
       file,
       employees,
+      companies,
+      plans,
       (comparedData) => {
         dispatch(setProcessedCsvData(comparedData));
         toast.success('CSV processed successfully!');

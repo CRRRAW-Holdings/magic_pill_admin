@@ -84,7 +84,7 @@ def bulk_user_operations():
         elif action == "toggle":
             handle_toggle_action(operation, results, user_toggle_mappings)
         else:
-            logging.warning(f"Unknown action received: {action}")
+            results.append({"error": "Unknown Action", "message": f"Unknown action received: {action}"})
 
     perform_bulk_operations(User, results, user_insert_mappings, user_update_mappings, user_toggle_mappings)
 
@@ -92,34 +92,37 @@ def bulk_user_operations():
 
 
 def handle_add_action(operation, results, user_insert_mappings):
-    validation_result = validate_user_data(operation["user_data"])
+    validation_result = validate_user_data(operation["user_data"], "add")
     if "error" in validation_result:
         results.append(validation_result)
     else:
         user_insert_mappings.append(operation["user_data"])
 
 def handle_update_action(operation, results, user_update_mappings):
-    validation_result = validate_user_data(operation["user_data"])
+    validation_result = validate_user_data(operation["user_data"], "update")
     if "error" in validation_result:
         results.append(validation_result)
     else:
-        # Use the username to get the user_id
+        user_id = operation["user_data"].get("user_id")  # Moved inside user_data
         with Session() as session:
-            user = session.query(User).filter_by(username=operation["user_data"]["username"]).first()
+            user = session.query(User).filter_by(user_id=user_id).first()
             if user:
-                operation["user_data"]["user_id"] = user.user_id
                 user_update_mappings.append(operation["user_data"])
             else:
-                results.append({"error": "User Not Found", "message": f"User with username {operation['user_data']['username']} not found."})
+                results.append({"error": "User Not Found", "message": f"User with ID {user_id} not found."})
 
 def handle_toggle_action(operation, results, user_toggle_mappings):
-    username = operation.get("username")
-    with Session() as session:
-        user = session.query(User).filter_by(username=username).first()
-        if user:
-            user_toggle_mappings.append({"user_id": user.user_id, "is_active": not user.is_active})
-        else:
-            results.append({"error": "User Not Found", "message": f"User with username {username} not found."})
+    validation_result = validate_user_data(operation["user_data"], "toggle")
+    if "error" in validation_result:
+        results.append(validation_result)
+    else:
+        user_id = operation["user_data"].get("user_id")  # Moved inside user_data
+        with Session() as session:
+            user = session.query(User).filter_by(user_id=user_id).first()
+            if user:
+                user_toggle_mappings.append({"user_id": user_id, "is_active": not user.is_active})
+            else:
+                results.append({"error": "User Not Found", "message": f"User with ID {user_id} not found."})
 
 def perform_bulk_operations(model, results, inserts, updates, toggles):
     bulk_ops = [
@@ -131,8 +134,9 @@ def perform_bulk_operations(model, results, inserts, updates, toggles):
         with Session() as session:
             for ops, message, method in bulk_ops:
                 if ops:
-                    method(model, ops)  # assuming these methods are session-aware
+                    method(model, ops)
                     results.extend([{"success": True, "message": f"User {message} successfully"} for _ in ops])
+                    session.commit()
     except IntegrityError as e:
         logging.error(f"Database Integrity Error: {str(e)}")
         results.extend([{"error": "Database Integrity Error", "message": str(e)} for _ in ops])
@@ -141,7 +145,10 @@ def perform_bulk_operations(model, results, inserts, updates, toggles):
         results.extend([{"error": "Database Error", "message": str(e)} for _ in ops])
 
 
-def validate_user_data(data):
+def validate_user_data(data, action):
+    if action in ["update", "toggle"] and "user_id" not in data:
+        return {"error": "Bad Request", "message": "'user_id' is required for update and toggle operations."}
+
     required_fields = {
         "username": str,
         "email": str,
@@ -150,9 +157,8 @@ def validate_user_data(data):
         "phone": str,
         "address": str,
         "dob": str,
-        "company": str,
         "insurance_company_id": int,
-        "plan_name": str,
+        "magic_pill_plan_id": int,
         "is_active": bool,
         "is_dependant": bool
     }
@@ -163,16 +169,13 @@ def validate_user_data(data):
             return {"error": "Bad Request", "message": f"'{field}' is required."}
         if not isinstance(value, expected_type):
             return {"error": "Bad Request", "message": f"'{field}' should be of type {expected_type.__name__}."}
-    
-    
+
     with Session() as session:
         insurance_company = session.get(InsuranceCompany, data["insurance_company_id"])
-        magic_pill_plan = session.query(MagicPillPlan).filter_by(plan_name=data["plan_name"]).first()
+        magic_pill_plan = session.get(MagicPillPlan, data["magic_pill_plan_id"])
 
-        if magic_pill_plan:
-            data["magic_pill_plan_id"] = magic_pill_plan.magic_pill_plan_id
-        else:
-            return {"error": "Not Found", "message": "Provided Magic Pill Plan name not found."}
+        if not magic_pill_plan:
+            return {"error": "Not Found", "message": "Provided Magic Pill Plan ID not found."}
 
         if not insurance_company:
             return {"error": "Not Found", "message": "Insurance company not found."}

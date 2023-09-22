@@ -32,7 +32,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
   const disabled = processedCsvData.filter(data => data.action === 'toggle');
 
   const handleApprove = () => {
-    const dataToUpload = [...added, ...edited, ...disabled].filter(item => checkedItems.includes(item.username));
+    const dataToUpload = [...added, ...edited, ...disabled].filter(item => checkedItems.includes(item.user_data.username));
     dispatch(uploadCSVThunk(dataToUpload))
       .then((action) => {
         if (action.type === 'employee/uploadCSV/fulfilled') {
@@ -43,7 +43,6 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
       });
   };
 
-
   const handleSelectAll = (tab) => {
     let items = [];
     if (tab === 'added') items = added;
@@ -51,9 +50,9 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
     else if (tab === 'disabled') items = disabled;
 
     if (selectAll[tab]) {
-      setCheckedItems(prevCheckedItems => prevCheckedItems.filter(id => !items.map(user => user.username).includes(id)));
+      setCheckedItems(prevCheckedItems => prevCheckedItems.filter(id => !items.map(user => user.user_data.username).includes(id)));
     } else {
-      setCheckedItems(prevCheckedItems => [...new Set([...prevCheckedItems, ...items.map(user => user.username)])]);
+      setCheckedItems(prevCheckedItems => [...new Set([...prevCheckedItems, ...items.map(user => user.user_data.username)])]);
     }
 
     setSelectAll(prevSelectAll => ({ ...prevSelectAll, [tab]: !prevSelectAll[tab] }));
