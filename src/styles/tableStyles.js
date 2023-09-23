@@ -73,7 +73,6 @@ export const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   overflowY: 'auto',
 }));
 
-
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
   padding: theme.spacing(1, 2),
   justifyContent: 'space-between',
@@ -87,8 +86,7 @@ export const HeaderCell = styled(TableCell)(({ theme }) => ({
   position: 'sticky',
   top: 0,
   zIndex: 1,  // Optional: to ensure header stays on top
-  background: '#fff',
-  textAlign: 'left'  // Change this to 'left'
+  textAlign: 'left'
 }));
 
 

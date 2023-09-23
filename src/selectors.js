@@ -2,8 +2,11 @@
 
 import { createSelector } from 'reselect';
 
+
+//AUTH/USER
 export const selectAdminData = state => state.auth.admin;
 
+//COMPANY
 export const selectCompanies = state => state.company.companies;
 
 export const selectSearchTerm = state => state.company.searchTerm;
@@ -28,3 +31,5 @@ export const selectFilteredCompanies = createSelector(
     );
   }
 );
+
+

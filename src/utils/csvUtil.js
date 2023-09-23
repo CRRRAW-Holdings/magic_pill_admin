@@ -110,13 +110,16 @@ const required_fields = [
   'is_dependant'
 ];
 
+
 const hasDifferences = (oldEmployee, newEmployee) => {
+  let differencesFound = false;
   for (const key of required_fields) {
     if (oldEmployee[key] !== newEmployee[key]) {
-      return true;
+      console.log(`Field: ${key}, Old Value: ${oldEmployee[key]}, New Value: ${newEmployee[key]}`);
+      differencesFound = true;
     }
   }
-  return false;
+  return differencesFound;
 };
 
 const compareFileWithCurrentData = (fileContent, employees, companies, plans) => {

@@ -71,7 +71,17 @@ const theme = createTheme({
       contrastText: '#ffffff',
     },
     grey: {
-      main: '#c2c2c2',
+      50: '#f9f9f9',
+      100: '#f0f0f0',
+      200: '#d9d9d9',
+      300: '#c0c0c0',
+      400: '#a9a9a9',
+      500: '#919191',
+      600: '#7d7d7d',
+      700: '#696969',
+      800: '#555555',
+      900: '#414141',
+      main: '#696969',  // Equating 700 to 'main'
       light: '#bdbdbd',
       dark: '#616161',
       contrastText: '#000',

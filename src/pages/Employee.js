@@ -17,7 +17,6 @@ import { toast } from 'react-toastify';
 import {
   TableBody,
   TableHead,
-  TableRow,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 
@@ -26,7 +25,7 @@ import AddEmployeeDialog from './AddEmployeeDialog';
 import EditEmployeeDialog from './EditEmployeeDialog';
 import ComparisonDialog from './ComparisonDialog';
 import { CompanyName, LockedTooltip, StyledPaper, StyledSearchBar } from '../styles/styledComponents';
-import { EmployeeRow, HeaderCell, StyledTable, StyledTableCell, StyledTableContainer } from '../styles/tableStyles';
+import { EmployeeRow, HeaderCell, HeaderTableRow, StyledTable, StyledTableCell, StyledTableContainer } from '../styles/tableStyles';
 import { AddEmployeeButton, DisableButton, EditButton, EnableButton, UploadCSVButton } from '../styles/buttonComponents';
 
 
@@ -146,7 +145,7 @@ function Employee() {
       <StyledTableContainer>
         <StyledTable>
           <TableHead>
-            <TableRow>
+            <HeaderTableRow>
               <HeaderCell>First Name</HeaderCell>
               <HeaderCell>Last Name</HeaderCell>
               <HeaderCell>Email</HeaderCell>
@@ -154,8 +153,8 @@ function Employee() {
               <HeaderCell>
                 <span onClick={toggleSort} style={{ cursor: 'pointer' }}>Status {sortOrder === 'asc' ? '↑' : '↓'}</span>
               </HeaderCell>
-              <HeaderCell>Actions</HeaderCell>
-            </TableRow>
+              <HeaderCell>Edit</HeaderCell>
+            </HeaderTableRow>
           </TableHead>
           <TableBody>
             {filteredEmployees.map((employee) => (
@@ -187,13 +186,20 @@ function Employee() {
                 <StyledTableCell>{employee.email}</StyledTableCell>
                 <StyledTableCell>{employee.magic_pill_plan?.plan_name}</StyledTableCell>
                 <StyledTableCell>
-                  <EditButton variant="contained" onClick={() => editEmployee(employee)}>Edit</EditButton>
-                  {employee.is_active ? (
-                    <DisableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Disable</DisableButton>
-                  ) : (
-                    <EnableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Enable</EnableButton>
-                  )}
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    {employee.is_active ? (
+                      <DisableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Disable</DisableButton>
+                    ) : (
+                      <EnableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Enable</EnableButton>
+                    )}
+                  </div>
                 </StyledTableCell>
+                <StyledTableCell>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <EditButton variant="contained" onClick={() => editEmployee(employee)}>Edit</EditButton>
+                  </div>
+                </StyledTableCell>
+
               </EmployeeRow>
             ))}
           </TableBody>
