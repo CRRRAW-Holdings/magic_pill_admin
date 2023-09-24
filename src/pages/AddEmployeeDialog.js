@@ -14,7 +14,7 @@ import MenuItem from '@mui/material/MenuItem';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 import { getCompanyNameFromInsuranceId } from '../utils/mappingUtils';
-import { isValidEmail } from '../utils/emailUtil';
+import { isValidEmail } from '../utils/fieldUtil';
 
 function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
   const dispatch = useDispatch();

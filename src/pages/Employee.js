@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -12,14 +13,14 @@ import { fetchPlans } from '../slices/planSlice'; // Import fetchPlans
 
 import { processFile } from '../utils/csvUtil';
 import { toast } from 'react-toastify';
-
+import theme from '../theme';
 
 import {
   TableBody,
   TableHead,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
-
+import PersonIcon from '@mui/icons-material/Person';
 
 import AddEmployeeDialog from './AddEmployeeDialog';
 import EditEmployeeDialog from './EditEmployeeDialog';
@@ -30,6 +31,22 @@ import { AddEmployeeButton, DisableButton, EditButton, EnableButton, UploadCSVBu
 
 
 const defaultEmployees = [];
+
+const SortableHeaderCell = ({ children, sortOrder, column, toggleSort }) => (
+  <HeaderCell onClick={() => toggleSort(column)} style={{ cursor: 'pointer' }}>
+    {children} {sortOrder.column === column ? (sortOrder.direction === 'asc' ? '↑' : '↓') : null}
+  </HeaderCell>
+);
+
+SortableHeaderCell.propTypes = {
+  children: PropTypes.node.isRequired,
+  sortOrder: PropTypes.shape({
+    column: PropTypes.string.isRequired,
+    direction: PropTypes.oneOf(['asc', 'desc']).isRequired
+  }).isRequired,
+  column: PropTypes.string.isRequired,
+  toggleSort: PropTypes.func.isRequired
+};
 
 function Employee() {
   const { id: companyId } = useParams();
@@ -45,7 +62,7 @@ function Employee() {
 
   //Table State
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState('asc');  // Add this line to track sort order
+  const [sortOrder, setSortOrder] = useState({ column: 'status', direction: 'asc' });
 
   //Dialog State
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
@@ -60,28 +77,32 @@ function Employee() {
 
   const fileRef = useRef(null);
 
-  const toggleSort = () => {
-    setSortOrder(prevOrder => prevOrder === 'asc' ? 'desc' : 'asc');
+  const toggleSort = (column) => {
+    setSortOrder(prevOrder => ({
+      column,
+      direction: prevOrder.column === column && prevOrder.direction === 'asc' ? 'desc' : 'asc'
+    }));
   };
 
-  const filteredEmployees = employees
-    .filter(employee => {
-      const searchTerm = searchQuery.toLowerCase();
-      return (
+  const filteredEmployees = useMemo(() => {
+    const searchTerm = searchQuery.toLowerCase();
+    return [...employees]
+      .filter(employee =>
         employee.username.toLowerCase().includes(searchTerm) ||
         employee.email.toLowerCase().includes(searchTerm)
-      );
-    })
-    .sort((a, b) => {
-      if (a.is_active && !b.is_active) {
-        return -1;
-      }
-      if (!a.is_active && b.is_active) {
-        return 1;
-      }
-      return 0;
-    });
-
+      )
+      .sort((a, b) => {
+        const sortOrderMultiplier = sortOrder.direction === 'asc' ? 1 : -1;
+        switch (sortOrder.column) {
+        case 'status':
+          return (b.is_active - a.is_active) * sortOrderMultiplier;
+        case 'plan':
+          return a.magic_pill_plan?.plan_name.localeCompare(b.magic_pill_plan?.plan_name) * sortOrderMultiplier;
+        default:
+          return 0;
+        }
+      });
+  }, [employees, searchQuery, sortOrder]);
 
   const handleSearch = (value) => {
     setSearchQuery(value);
@@ -149,10 +170,8 @@ function Employee() {
               <HeaderCell>First Name</HeaderCell>
               <HeaderCell>Last Name</HeaderCell>
               <HeaderCell>Email</HeaderCell>
-              <HeaderCell>Plan</HeaderCell>
-              <HeaderCell>
-                <span onClick={toggleSort} style={{ cursor: 'pointer' }}>Status {sortOrder === 'asc' ? '↑' : '↓'}</span>
-              </HeaderCell>
+              <SortableHeaderCell sortOrder={sortOrder} column="plan" toggleSort={toggleSort}>Plan</SortableHeaderCell>
+              <SortableHeaderCell sortOrder={sortOrder} column="status" toggleSort={toggleSort}>Status</SortableHeaderCell>
               <HeaderCell>Edit</HeaderCell>
             </HeaderTableRow>
           </TableHead>
@@ -160,26 +179,28 @@ function Employee() {
             {filteredEmployees.map((employee) => (
               <EmployeeRow key={employee.user_id} isActive={employee.is_active}>
                 <StyledTableCell>
-                  {employee.is_active ? (
-                    employee.first_name
-                  ) : (
-                    <LockedTooltip title="Employee is disabled">
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <LockIcon color="error" style={{ marginRight: '8px' }} />
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {employee.is_active ? (
+                      <>
+                        <PersonIcon style={{ marginRight: '8px', color: theme.palette.primary.light }} />
                         {employee.first_name}
-                      </div>
-                    </LockedTooltip>
-                  )}
+                      </>
+                    ) : (
+                      <LockedTooltip title="Employee is disabled">
+                        <>
+                          <LockIcon color="error" style={{ marginRight: '8px' }} />
+                          {employee.first_name}
+                        </>
+                      </LockedTooltip>
+                    )}
+                  </div>
                 </StyledTableCell>
                 <StyledTableCell>
                   {employee.is_active ? (
                     employee.last_name
                   ) : (
                     <LockedTooltip title="Employee is disabled">
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <LockIcon color="error" style={{ marginRight: '8px' }} />
-                        {employee.last_name}
-                      </div>
+                      employee.last_name
                     </LockedTooltip>
                   )}
                 </StyledTableCell>

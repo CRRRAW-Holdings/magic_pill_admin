@@ -4,6 +4,8 @@ import {
   getPlanIdFromName,
   getCompanyNameFromInsuranceId,
 } from './mappingUtils';
+import { formatDateToYYYYMMDD } from './fieldUtil';
+import ProcessingError from '../errors/error';
 
 const isValidFileType = (fileName) => {
   return /.csv$/i.test(fileName) || /\.xls(x)?$/i.test(fileName);
@@ -68,32 +70,41 @@ const readFileContent = (file, onSuccess, onError) => {
   }
 };
 
-const formatDateToYYYYMMDD = (dateString) => {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
+const validateData = (parsedData) => {
+  for (const record of parsedData) {
+    if (!record.email || !record.dob /* ... other validations */) {
+      throw new ProcessingError('Invalid data: missing required fields.', 'VALIDATION_ERROR');
+    }
+    // ... other validations
+  }
 };
 
 const transformEmployee = (employee, companies, plans) => {
-  const { email, dob, first_name, insurance_company_id, plan_name, is_active, address, last_name, phone, is_dependent } = employee;
-  const formattedDOB = formatDateToYYYYMMDD(dob);
-  return {
-    email: email,
-    dob: formattedDOB,
-    username: `${email}_${formattedDOB}_${insurance_company_id}`,
-    insurance_company_id: insurance_company_id,
-    magic_pill_plan_id: getPlanIdFromName(plan_name, plans),
-    is_active: is_active,
-    address: address,
-    company: getCompanyNameFromInsuranceId(insurance_company_id, companies),
-    first_name: first_name,
-    last_name: last_name,
-    phone: phone,
-    is_dependent: is_dependent,
-  };
+  try {
+    const { email, dob, first_name, insurance_company_id, plan_name, is_active, address, last_name, phone, is_dependent } = employee;
+    const formattedDOB = formatDateToYYYYMMDD(dob);
+
+    const formattedPhone = typeof phone === 'number'
+      ? phone.toString()
+      : phone.replace(/[^0-9]/g, '');
+
+    return {
+      email: email,
+      dob: formattedDOB,
+      username: `${email}_${formattedDOB}_${insurance_company_id}`,
+      insurance_company_id: insurance_company_id,
+      magic_pill_plan_id: getPlanIdFromName(plan_name, plans),
+      is_active: is_active,
+      address: address,
+      company: getCompanyNameFromInsuranceId(insurance_company_id, companies),
+      first_name: first_name,
+      last_name: last_name,
+      phone: formattedPhone,
+      is_dependent: is_dependent,
+    };
+  } catch (error) {
+    throw new ProcessingError('Error transforming employee data: ' + error.message, 'TRANSFORM_ERROR');
+  }
 };
 
 const required_fields = [
@@ -115,7 +126,7 @@ const hasDifferences = (oldEmployee, newEmployee) => {
   let differencesFound = false;
   for (const key of required_fields) {
     if (oldEmployee[key] !== newEmployee[key]) {
-      console.log(`Field: ${key}, Old Value: ${oldEmployee[key]}, New Value: ${newEmployee[key]}`);
+      console.log(`Field: ${key}`, `Old Value: ${oldEmployee[key]}`,` New Value: ${newEmployee[key]}`);
       differencesFound = true;
     }
   }
@@ -167,6 +178,8 @@ const compareFileWithCurrentData = (fileContent, employees, companies, plans) =>
 
       processedUsernames.push(transformedEmployeeFromFile.username);
       employees = employees.filter(emp => emp.username !== matchedEmployee.username);
+    } else if (matchedEmployees.length > 1) {
+      throw new ProcessingError('Duplicate data found for: ' + JSON.stringify(transformedEmployeeFromFile), 'DUPLICATE_DATA_ERROR');
     } else {
       results.push({
         action: 'add',
@@ -183,20 +196,28 @@ const compareFileWithCurrentData = (fileContent, employees, companies, plans) =>
 };
 
 
-
 export const processFile = (file, employees, companies, plans, onSuccess, onError) => {
-  if (!isFileValid(file)) {
-    onError('Invalid file type or size. Max allowed size: 25MB');
-    return;
-  }
+  try {
+    console.log('h');
+    if (!isFileValid(file)) {
+      throw new ProcessingError('Invalid file type or size. Max allowed size: 25MB', 'FILE_VALIDATION_ERROR');
+    }
 
-  readFileContent(
-    file,
-    (parsedData) => {
-      console.log(parsedData, 'parsedData');
-      const comparedData = compareFileWithCurrentData(parsedData, employees, companies, plans);
-      onSuccess(comparedData);
-    },
-    onError
-  );
+    readFileContent(
+      file,
+      (parsedData) => {
+        validateData(parsedData);
+        console.log(parsedData, 'parsedData');
+        const comparedData = compareFileWithCurrentData(parsedData, employees, companies, plans);
+        onSuccess(comparedData);
+      },
+      onError
+    );
+  } catch (error) {
+    if (error instanceof ProcessingError) {
+      onError(error.message);
+    } else {
+      onError('An unexpected error occurred.');
+    }
+  }
 };

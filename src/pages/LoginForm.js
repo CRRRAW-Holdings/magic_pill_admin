@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 import { FormField, LoginButton } from '../styles/styledLanding';
 import { useDispatch } from 'react-redux';
 import { sendSignInLinkToEmailAction, getAdminByEmail } from '../slices/authSlice';
-import { isValidEmail } from '../utils/emailUtil';
+import { isValidEmail } from '../utils/fieldUtil';
 
 
 const LoginForm = ({ toggleForm, setEmailVerified }) => {
