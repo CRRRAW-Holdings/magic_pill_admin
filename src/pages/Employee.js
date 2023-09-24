@@ -29,6 +29,7 @@ import ComparisonDialog from './ComparisonDialog';
 import { CompanyName, LockedTooltip, StyledPaper, StyledSearchBar } from '../styles/styledComponents';
 import { EmployeeRow, HeaderCell, HeaderTableRow, StyledTable, StyledTableCell, StyledTableContainer } from '../styles/tableStyles';
 import { AddEmployeeButton, DisableButton, EditButton, EnableButton, UploadCSVButton } from '../styles/buttonComponents';
+import { ActionContainer, NavbarContainer } from '../styles/containerStyles';
 
 
 const defaultEmployees = [];
@@ -156,19 +157,19 @@ function Employee() {
 
   return (
     <StyledPaper>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <NavbarContainer>
         <CompanyName>{companyName}</CompanyName>
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-        <AddEmployeeButton variant="contained" onClick={() => setIsAddEmployeeDialogOpen(true)}>
-          Add Employee
-        </AddEmployeeButton>
-        <StyledSearchBar onChange={(e) => handleSearch(e.target.value)} />
-        <input type="file" ref={fileRef} style={{ display: 'none' }} onChange={handleFileChange} />
-        <UploadCSVButton variant="contained" onClick={() => fileRef.current.click()}>
-          Upload Company CSV
-        </UploadCSVButton>
-      </div>
+        <ActionContainer>
+          <StyledSearchBar onChange={(e) => handleSearch(e.target.value)} />
+          <AddEmployeeButton variant="contained" onClick={() => setIsAddEmployeeDialogOpen(true)}>
+            Add Employee
+          </AddEmployeeButton>
+          <input type="file" ref={fileRef} style={{ display: 'none' }} onChange={handleFileChange} />
+          <UploadCSVButton variant="contained" onClick={() => fileRef.current.click()}>
+            Upload Company CSV
+          </UploadCSVButton>
+        </ActionContainer>
+      </NavbarContainer>
       <StyledTableContainer>
         <StyledTable>
           <TableHead>

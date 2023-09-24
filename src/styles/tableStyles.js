@@ -61,15 +61,17 @@ export const StyledTable = styled(Table)(({ theme }) => ({
   },
 }));
 
-// Table Container with a defined max height, scroll capability, and border adjustments
-export const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
+const tableContainerStyles = (height) => ({ theme }) => ({
   marginTop: '20px',
   border: `1px solid ${theme.palette.grey.main}`,
   borderRadius: '4px',
   backgroundColor: '#ffffff',
-  height: '450px',
+  height,
   overflowY: 'auto',
-}));
+});
+
+export const StyledTableContainer = styled(TableContainer)(tableContainerStyles('77vh'));
+export const DialogStyledTableContainer = styled(TableContainer)(tableContainerStyles('450px'));
 
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
   padding: theme.spacing(1, 2),
