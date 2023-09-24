@@ -5,7 +5,7 @@ import {
   Card, CardContent, TableRow, TableCell
 } from '@mui/material';
 import {
-  IconTableCell, HeaderTableRow, StyledTableRow, StyledTableCell, HeaderCell, StyledTableContainer
+  IconTableCell, HeaderTableRow, StyledTableRow, StyledTableCell, HeaderCell, DialogStyledTableContainer
 } from '../styles/tableStyles';
 import { StyledCheckbox } from '../styles/styledComponents';
 
@@ -23,7 +23,7 @@ const UserTable = ({
       <Typography variant="h6">
         {`${type.charAt(0).toUpperCase() + type.slice(1)} Users`}
       </Typography>
-      <StyledTableContainer>
+      <DialogStyledTableContainer>
         <Table>
           <TableHead>
             <HeaderTableRow>
@@ -69,7 +69,7 @@ const UserTable = ({
             )}
           </TableBody>
         </Table>
-      </StyledTableContainer>
+      </DialogStyledTableContainer>
     </CardContent>
   </Card>
 );

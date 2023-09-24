@@ -16,9 +16,9 @@ export const EditButton = styled(Button)(({ theme }) => ({
 
 export const AddEmployeeButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.success.dark,
-  fontSize: '16px',
-  padding: '12px 30px',
-  minWidth: '150px',
+  fontSize: '1rem',
+  padding: '10px 20px',
+  minWidth: '100px',
   [theme.breakpoints.down('sm')]: {
     width: 'calc(85% - 10px)',
     marginRight: '10px',
@@ -73,6 +73,7 @@ export const UploadCSVButton = styled(Button)(({ theme }) => ({
     boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
   },
 }));
+
 export const BulkEditButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.primary.light,
   color: theme.palette.primary.contrastText,
@@ -89,7 +90,7 @@ export const StyledCheckbox = styled(Checkbox)(({ theme }) => ({
 
 export const SearchBar = styled(TextField)(({ theme }) => ({
   padding: '10px',
-  width: '80%',
+  width: '100%',
   display: 'block',  // Ensure it's a block-level element by default
   [theme.breakpoints.up('sm')]: {  // On small screens and up
     width: 'calc(100% - 20px)',   // Full width minus paddings

@@ -7,6 +7,7 @@ import {
   selectEmployee,
   toggleEmployeeStatusThunk,
   setProcessedCsvData,
+  resetProcessedCsvData,
 } from '../slices/employeeSlice';
 import { fetchCompanies } from '../slices/companySlice';
 import { fetchPlans } from '../slices/planSlice'; // Import fetchPlans
@@ -28,6 +29,7 @@ import ComparisonDialog from './ComparisonDialog';
 import { CompanyName, LockedTooltip, StyledPaper, StyledSearchBar } from '../styles/styledComponents';
 import { EmployeeRow, HeaderCell, HeaderTableRow, StyledTable, StyledTableCell, StyledTableContainer } from '../styles/tableStyles';
 import { AddEmployeeButton, DisableButton, EditButton, EnableButton, UploadCSVButton } from '../styles/buttonComponents';
+import { ActionContainer, NavbarContainer } from '../styles/containerStyles';
 
 
 const defaultEmployees = [];
@@ -132,6 +134,7 @@ function Employee() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    e.target.value = null;  // Reset the file input    
     processFile(
       file,
       employees,
@@ -139,7 +142,6 @@ function Employee() {
       plans,
       (comparedData) => {
         dispatch(setProcessedCsvData(comparedData));
-        toast.success('CSV processed successfully!');
         setIsComparisonDialogOpen(true);
       },
       (error) => {
@@ -148,21 +150,26 @@ function Employee() {
     );
   };
 
+  const handleComparisonDialogClose = () => {
+    dispatch(resetProcessedCsvData());
+    setIsComparisonDialogOpen(false);
+  };
+
   return (
     <StyledPaper>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <NavbarContainer>
         <CompanyName>{companyName}</CompanyName>
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-        <AddEmployeeButton variant="contained" onClick={() => setIsAddEmployeeDialogOpen(true)}>
-          Add Employee
-        </AddEmployeeButton>
-        <StyledSearchBar onChange={(e) => handleSearch(e.target.value)} />
-        <input type="file" ref={fileRef} style={{ display: 'none' }} onChange={handleFileChange} />
-        <UploadCSVButton variant="contained" onClick={() => fileRef.current.click()}>
-          Upload Company CSV
-        </UploadCSVButton>
-      </div>
+        <ActionContainer>
+          <StyledSearchBar onChange={(e) => handleSearch(e.target.value)} />
+          <AddEmployeeButton variant="contained" onClick={() => setIsAddEmployeeDialogOpen(true)}>
+            Add Employee
+          </AddEmployeeButton>
+          <input type="file" ref={fileRef} style={{ display: 'none' }} onChange={handleFileChange} />
+          <UploadCSVButton variant="contained" onClick={() => fileRef.current.click()}>
+            Upload Company CSV
+          </UploadCSVButton>
+        </ActionContainer>
+      </NavbarContainer>
       <StyledTableContainer>
         <StyledTable>
           <TableHead>
@@ -228,7 +235,7 @@ function Employee() {
       </StyledTableContainer>
       <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} companies={companies} plans={plans} />
       {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} companies={companies} plans={plans} />}
-      <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData} companyId={companyId} companies={companies} plans={plans} />
+      <ComparisonDialog open={isComparisonDialogOpen} onClose={handleComparisonDialogClose} processedCsvData={processedCsvData} companyId={companyId} companies={companies} plans={plans} />
     </StyledPaper>
   );
 }
