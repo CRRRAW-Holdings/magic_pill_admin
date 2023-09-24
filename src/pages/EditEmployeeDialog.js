@@ -17,10 +17,10 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
   const dispatch = useDispatch();
   const [employeeData, setEmployeeData] = useState({
     email: '',
-    insurance_company_id: '',
+    insurance_company_id: companyId,
     magic_pill_plan_id: '',
     is_active: true,
-    is_dependant: false,
+    is_dependent: false,
     address: '',
     dob: '',
     company: '',
@@ -45,17 +45,24 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
     setEmployeeData(prevState => ({ ...prevState, [name]: checked }));
   };
 
-
   const handleSubmit = () => {
-    dispatch(updateEmployeeThunk({ companyId, employeeData }))
+    const formattedDOB = employeeData.dob;
+    const username = `${employeeData.email}_${formattedDOB}_${employeeData.insurance_company_id}`;
+
+    const updatedEmployeeData = {
+      ...employeeData,
+      username,
+    };
+
+    dispatch(updateEmployeeThunk({ companyId, employeeData: updatedEmployeeData }))
       .then(action => {
         if (updateEmployeeThunk.fulfilled.match(action)) {
           onClose(action.payload);
         } else if (updateEmployeeThunk.rejected.match(action)) {
           console.error('Error updating employee:', action.error);
         }
-      }).catch(() => {
-        // Handle error if needed
+      }).catch(error => {
+        console.error('Error updating employee:', error);
       });
   };
 
@@ -86,13 +93,13 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
         <FormControlLabel
           control={
             <Checkbox
-              checked={employeeData.is_dependant}
+              checked={employeeData.is_dependent}
               onChange={handleCheckboxChange}
-              name="is_dependant"
+              name="is_dependent"
               color="primary"
             />
           }
-          label="Is Dependant"
+          label="Is Dependent"
         />
         <TextField
           margin="dense"

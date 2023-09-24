@@ -12,15 +12,16 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
 
 function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
   const dispatch = useDispatch();
   const [employeeData, setEmployeeData] = useState({
     email: '',
-    insurance_company_id: '',
+    insurance_company_id: companyId,
     magic_pill_plan_id: '',
     is_active: true,
-    is_dependant: false,
+    is_dependent: false,
     address: '',
     dob: '',
     first_name: '',
@@ -39,27 +40,36 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
   };
 
   const handleSubmit = () => {
-    dispatch(addEmployeeThunk({ companyId, employeeData }))
+    const formattedDOB = employeeData.dob;
+
+    const username = `${employeeData.email}_${formattedDOB}_${employeeData.insurance_company_id}`;
+
+    const updatedEmployeeData = {
+      ...employeeData,
+      username,
+    };
+    dispatch(addEmployeeThunk({ companyId, employeeData: updatedEmployeeData }))
       .then(action => {
         if (addEmployeeThunk.fulfilled.match(action)) {
           setEmployeeData({
             email: '',
-            insurance_company_id: '',
-            magic_pill_plan_id: '',
+            insurance_company_id: null,
+            magic_pill_plan_id: null,
             is_active: true,
-            is_dependant: false,
+            is_dependent: false,
             address: '',
             dob: '',
             first_name: '',
             last_name: '',
-            phone: ''
+            phone: '',
+            username: ''
           });
           onClose();
         } else if (addEmployeeThunk.rejected.match(action)) {
-          console.error('Error adding employee:', action.error);
+          toast.error('Error adding employee!', action.error);
         }
       }).catch(() => {
-        // Handle error if needed
+        toast.error('Error adding employee!');
       });
   };
 
@@ -125,13 +135,13 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
         <FormControlLabel
           control={
             <Checkbox
-              checked={employeeData.is_dependant}
+              checked={employeeData.is_dependent}
               onChange={handleCheckboxChange}
-              name="is_dependant"
+              name="is_dependent"
               color="primary"
             />
           }
-          label="Is Dependant"
+          label="Is Dependent"
         />
         <TextField
           margin="dense"

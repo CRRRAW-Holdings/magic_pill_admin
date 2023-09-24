@@ -236,6 +236,7 @@ def add_user():
         last_name=data.get("last_name"),
         phone=data.get("phone"),
 	    is_dependent=data["is_dependent"] #change to is_dependant later potentially
+        address=data.get("address"),
     )
 
     try:
@@ -256,7 +257,7 @@ def update_user(user_id):
         if not user:
             return jsonify(results=[{"error": "Not Found", "message": "User not found."}]), 404
 
-        data = request.get_json()
+    data = request.get_json()
     user.username = data.get("username")
     user.email = data.get("email")
     user.insurance_company_id = data.get("insurance_company_id")
@@ -277,7 +278,7 @@ def update_user(user_id):
         session.rollback()
         return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
 
-@app.route("/user/toggle/<user_id>", methods=["PATCH"])
+@app.route("/user/toggle/<user_id>", methods=["POST"])
 def toggle_user(user_id):
     with Session() as session:
         user = session.query(User).get(user_id)
