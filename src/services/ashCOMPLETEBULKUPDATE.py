@@ -160,7 +160,7 @@ def validate_user_data(data, action):
         "insurance_company_id": int,
         "magic_pill_plan_id": int,
         "is_active": bool,
-        "is_dependant": bool
+        "is_dependent": bool
     }
     
     for field, expected_type in required_fields.items():
@@ -209,8 +209,8 @@ def add_user():
     if not data:
         return jsonify(results=[{"error": "Bad Request", "message": "No data provided."}]), 400
 
-    required_fields = [ "username", "email", "insurance_company_id", "plan_name", "is_active", 
-        "address", "dob", "company", "first_name", "last_name", "phone", "is_dependant"]
+    required_fields = [ "username", "email", "insurance_company_id", "magic_pill_plan_id", "is_active", 
+        "address", "dob", "first_name", "last_name", "phone", "is_dependent"]
 
     for field in required_fields:
         if field not in data:
@@ -235,7 +235,7 @@ def add_user():
         first_name=data.get("first_name"),
         last_name=data.get("last_name"),
         phone=data.get("phone"),
-	is_dependent=data["is_dependent"]
+	    is_dependent=data["is_dependent"] #change to is_dependant later potentially
     )
 
     try:
@@ -251,11 +251,12 @@ def add_user():
 
 @app.route("/user/update/<user_id>", methods=["POST"])
 def update_user(user_id):
-    user = Session.query(User).get(user_id)
-    if not user:
-        return jsonify(results=[{"error": "Not Found", "message": "User not found."}]), 404
-    
-    data = request.get_json()
+    with Session() as session:
+        user = session.query(User).get(user_id)
+        if not user:
+            return jsonify(results=[{"error": "Not Found", "message": "User not found."}]), 404
+
+        data = request.get_json()
     user.username = data.get("username")
     user.email = data.get("email")
     user.insurance_company_id = data.get("insurance_company_id")
@@ -270,24 +271,26 @@ def update_user(user_id):
     user.is_dependent =data.get("is_dependent")
 
     try:
-        Session.commit()
+        session.commit()
         return jsonify(results=[{"success": True, "message": "User updated successfully", "user": user.serialize_full()}])
     except exc.SQLAlchemyError as e:
-        Session.rollback()
+        session.rollback()
         return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
 
-@app.route("/user/toggle/<user_id>", methods=["POST"])
+@app.route("/user/toggle/<user_id>", methods=["PATCH"])
 def toggle_user(user_id):
     with Session() as session:
         user = session.query(User).get(user_id)
-    if not user:
-        return jsonify(results=[{"error": "Not Found", "message": "User not found."}]), 404
-    user.is_active = not user.is_active
-    try:
-        session.commit()
-        return jsonify(results=[{"success": True, "message": "User status toggled successfully"}])
-    except exc.SQLAlchemyError as e:
-        return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
+        if not user:
+            return jsonify(results=[{"error": "Not Found", "message": "User not found."}]), 404
+        user.is_active = not user.is_active
+        try:
+            session.commit()
+            return jsonify(results=[{"success": True, "message": "User status toggled successfully", "is_active": user.is_active}])
+        except exc.SQLAlchemyError as e:
+            session.rollback()
+            return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
+
     
 @app.route("/user/<user_id>", methods=["GET"])
 def get_user(user_id):
