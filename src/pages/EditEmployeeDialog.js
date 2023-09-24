@@ -50,8 +50,19 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
     const username = `${employeeData.email}_${formattedDOB}_${employeeData.insurance_company_id}`;
 
     const updatedEmployeeData = {
-      ...employeeData,
-      username,
+      address: employeeData.address,
+      insurance_company_id: employeeData.insurance_company_id,
+      magic_pill_plan_id: employeeData.magic_pill_plan_id,
+      company: employeeData.company,
+      dob: formattedDOB,
+      email: employeeData.email,
+      first_name: employeeData.first_name,
+      is_active: employeeData.is_active,
+      is_dependent: employeeData.is_dependent,
+      last_name: employeeData.last_name,
+      phone: employeeData.phone,
+      user_id: employeeData.user_id,
+      username: username,
     };
 
     dispatch(updateEmployeeThunk({ companyId, employeeData: updatedEmployeeData }))

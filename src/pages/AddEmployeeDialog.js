@@ -13,6 +13,8 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
+import { getCompanyNameFromInsuranceId } from '../utils/mappingUtils';
+import { isValidEmail } from '../utils/emailUtil';
 
 function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
   const dispatch = useDispatch();
@@ -29,9 +31,20 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
     phone: ''
   });
 
+  const [emailError, setEmailError] = useState('');
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEmployeeData(prevState => ({ ...prevState, [name]: value }));
+    if (name === 'email') {
+      setEmailError('');
+    }
+  };
+
+  const handleEmailBlur = () => {  // <-- Add this function
+    if (!isValidEmail(employeeData.email)) {
+      setEmailError('Invalid email address');
+    }
   };
 
   const handleCheckboxChange = (e) => {
@@ -43,18 +56,29 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
     const formattedDOB = employeeData.dob;
 
     const username = `${employeeData.email}_${formattedDOB}_${employeeData.insurance_company_id}`;
-
     const addedEmployeeData = {
-      ...employeeData,
-      username,
+      address: employeeData.address,
+      insurance_company_id: parseInt(companyId, 10),
+      magic_pill_plan_id: employeeData.magic_pill_plan_id,
+      age: employeeData.age,
+      company: getCompanyNameFromInsuranceId(),
+      dob: formattedDOB,
+      email: employeeData.email,
+      first_name: employeeData.first_name,
+      is_active: employeeData.is_active,
+      is_dependent: employeeData.is_dependent,
+      last_name: employeeData.last_name,
+      phone: employeeData.phone,
+      username: username,
     };
+
     dispatch(addEmployeeThunk({ companyId, employeeData: addedEmployeeData }))
       .then(action => {
         if (addEmployeeThunk.fulfilled.match(action)) {
           setEmployeeData({
             email: '',
-            insurance_company_id: null,
-            magic_pill_plan_id: null,
+            insurance_company_id: '',
+            magic_pill_plan_id: '',
             is_active: true,
             is_dependent: false,
             address: '',
@@ -64,6 +88,7 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
             phone: '',
             username: ''
           });
+          toast.success(`${action.payload?.first_name} ${action.payload?.last_name} was added successfully!`);
           onClose();
         } else if (addEmployeeThunk.rejected.match(action)) {
           toast.error('Error adding employee!', action.error);
@@ -85,6 +110,9 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
           fullWidth
           value={employeeData.email}
           onChange={handleChange}
+          onBlur={handleEmailBlur}
+          error={!!emailError}
+          helperText={emailError}
         />
         <Select
           value={companyId}

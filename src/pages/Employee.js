@@ -103,7 +103,7 @@ function Employee() {
   };
   const handleUserDialogClose = (updatedUser) => {
     if (updatedUser.user_id) {
-      toast.success(`${updatedUser.username} was added successfully!`);
+      toast.success(`${updatedUser.first_name} ${updatedUser.last_name} was added successfully!`);
     }
     setIsEditEmployeeDialogOpen(false);
   };
