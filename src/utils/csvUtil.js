@@ -78,7 +78,7 @@ const formatDateToYYYYMMDD = (dateString) => {
 };
 
 const transformEmployee = (employee, companies, plans) => {
-  const { email, dob, first_name, insurance_company_id, plan_name, is_active, address, last_name, phone, is_dependant } = employee;
+  const { email, dob, first_name, insurance_company_id, plan_name, is_active, address, last_name, phone, is_dependent } = employee;
   const formattedDOB = formatDateToYYYYMMDD(dob);
   return {
     email: email,
@@ -92,7 +92,7 @@ const transformEmployee = (employee, companies, plans) => {
     first_name: first_name,
     last_name: last_name,
     phone: phone,
-    is_dependant: is_dependant,
+    is_dependent: is_dependent,
   };
 };
 
@@ -107,7 +107,7 @@ const required_fields = [
   'address',
   'dob',
   'is_active',
-  'is_dependant'
+  'is_dependent'
 ];
 
 
