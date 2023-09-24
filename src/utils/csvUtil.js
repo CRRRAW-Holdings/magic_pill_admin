@@ -86,7 +86,8 @@ const transformEmployee = (employee, companies, plans) => {
 
     const formattedPhone = typeof phone === 'number'
       ? phone.toString()
-      : phone.replace(/[^0-9]/g, '');
+      : phone.replace(/[^0-9-]/g, '');
+
 
     return {
       email: email,
@@ -122,12 +123,13 @@ const required_fields = [
 ];
 
 
-const hasDifferences = (oldEmployee, newEmployee) => {
+const hasDifferences = (oldEmployee, newEmployee, ignoreFields = []) => {
   let differencesFound = false;
   for (const key of required_fields) {
-    if (oldEmployee[key] !== newEmployee[key]) {
-      console.log(`Field: ${key}`, `Old Value: ${oldEmployee[key]}`,` New Value: ${newEmployee[key]}`);
+    if (!ignoreFields.includes(key) && oldEmployee[key] !== newEmployee[key]) {
+      console.log(`Field: ${key}`, `Old Value: ${oldEmployee[key]}`, ` New Value: ${newEmployee[key]}`);
       differencesFound = true;
+      break;
     }
   }
   return differencesFound;
@@ -150,19 +152,18 @@ const compareFileWithCurrentData = (fileContent, employees, companies, plans) =>
       const matchedEmployee = matchedEmployees[0];
 
       if (matchedEmployee.first_name === transformedEmployeeFromFile.first_name && matchedEmployee.dob === transformedEmployeeFromFile.dob) {
-        if (hasDifferences(matchedEmployee, transformedEmployeeFromFile)) {
+        const isActiveChanged = matchedEmployee.is_active !== transformedEmployeeFromFile.is_active;
+        if (isActiveChanged && !hasDifferences(matchedEmployee, transformedEmployeeFromFile, ['is_active'])) {
           results.push({
-            action: 'update',
+            action: 'toggle',
             user_data: {
               ...transformedEmployeeFromFile,
               user_id: matchedEmployee.user_id
             }
           });
-        }
-
-        if (transformedEmployeeFromFile.is_active === false) {
+        } else if (hasDifferences(matchedEmployee, transformedEmployeeFromFile)) {
           results.push({
-            action: 'toggle',
+            action: 'update',
             user_data: {
               ...transformedEmployeeFromFile,
               user_id: matchedEmployee.user_id
@@ -198,7 +199,6 @@ const compareFileWithCurrentData = (fileContent, employees, companies, plans) =>
 
 export const processFile = (file, employees, companies, plans, onSuccess, onError) => {
   try {
-    console.log('h');
     if (!isFileValid(file)) {
       throw new ProcessingError('Invalid file type or size. Max allowed size: 25MB', 'FILE_VALIDATION_ERROR');
     }
