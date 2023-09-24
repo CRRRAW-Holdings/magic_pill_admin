@@ -7,6 +7,7 @@ import {
   selectEmployee,
   toggleEmployeeStatusThunk,
   setProcessedCsvData,
+  resetProcessedCsvData,
 } from '../slices/employeeSlice';
 import { fetchCompanies } from '../slices/companySlice';
 import { fetchPlans } from '../slices/planSlice'; // Import fetchPlans
@@ -132,6 +133,7 @@ function Employee() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    e.target.value = null;  // Reset the file input    
     processFile(
       file,
       employees,
@@ -139,13 +141,17 @@ function Employee() {
       plans,
       (comparedData) => {
         dispatch(setProcessedCsvData(comparedData));
-        toast.success('CSV processed successfully!');
         setIsComparisonDialogOpen(true);
       },
       (error) => {
         toast.error('Error processing CSV!', error);
       }
     );
+  };
+
+  const handleComparisonDialogClose = () => {
+    dispatch(resetProcessedCsvData());
+    setIsComparisonDialogOpen(false);
   };
 
   return (
@@ -228,7 +234,7 @@ function Employee() {
       </StyledTableContainer>
       <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} companies={companies} plans={plans} />
       {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} companies={companies} plans={plans} />}
-      <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData} companyId={companyId} companies={companies} plans={plans} />
+      <ComparisonDialog open={isComparisonDialogOpen} onClose={handleComparisonDialogClose} processedCsvData={processedCsvData} companyId={companyId} companies={companies} plans={plans} />
     </StyledPaper>
   );
 }

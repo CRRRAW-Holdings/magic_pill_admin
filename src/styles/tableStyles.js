@@ -27,8 +27,6 @@ export const HeaderTableRow = styled(TableRow)(({ theme }) => ({
   borderBottom: `2px solid ${theme.palette.grey.main}`,
 }));
 
-
-// TableRow with different background colors based on the row type (e.g., add, edit, disable)
 export const StyledTableRow = styled(TableRow)(({ theme, rowType }) => {
   const classes = {
     add: {
@@ -69,15 +67,14 @@ export const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   border: `1px solid ${theme.palette.grey.main}`,
   borderRadius: '4px',
   backgroundColor: '#ffffff',
-  height: 'auto',  // Make height adaptive to content
-  maxHeight: '800px',  // But set a maximum height
+  height: '450px',
   overflowY: 'auto',
 }));
 
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
   padding: theme.spacing(1, 2),
   justifyContent: 'space-between',
-  textAlign: 'left',  // Change this to 'left'
+  textAlign: 'left',
 }));
 
 export const HeaderCell = styled(TableCell)(({ theme }) => ({

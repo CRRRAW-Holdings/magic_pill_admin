@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createAction } from '@reduxjs/toolkit';
 import { fetchEmployeesFromCompany, addEmployeeToCompany, updateEmployeeDetails, toggleEmployeeStatus, uploadCSVData } from '../services/api';
 
 export const fetchEmployees = createAsyncThunk(
@@ -92,6 +92,7 @@ export const previewCSVThunk = createAsyncThunk(
 );
 
 
+export const resetProcessedCsvData = createAction('employee/resetProcessedCsvData');
 
 
 
@@ -106,7 +107,7 @@ const employeeSlice = createSlice({
       message: '',
     },
     processedCsvData: [],
-    isComparisonDialogOpen: false,      // Useful for displaying specific messages to the user.
+    isComparisonDialogOpen: false,
     companyName: null,
     employees: [],
     loading: false,
@@ -140,6 +141,9 @@ const employeeSlice = createSlice({
     },
     setProcessedCsvData: (state, action) => {
       state.processedCsvData = action.payload;
+    },
+    [resetProcessedCsvData]: (state) => {
+      state.processedCsvData = [];
     },
   },
   extraReducers: (builder) => {
