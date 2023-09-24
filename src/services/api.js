@@ -2,8 +2,8 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  // baseURL: 'http://3.36.43.89:3000/',
-  baseURL: 'https://crrrawapis.com:3000/',
+  baseURL: 'http://3.36.43.89:3000/',
+  // baseURL: 'https://crrrawapis.com:3000/',
   headers: {
     'Content-Type': 'application/json',
   }

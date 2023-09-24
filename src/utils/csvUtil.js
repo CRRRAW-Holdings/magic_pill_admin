@@ -135,7 +135,7 @@ const hasDifferences = (oldEmployee, newEmployee, ignoreFields = []) => {
   return differencesFound;
 };
 
-const compareFileWithCurrentData = (fileContent, employees, companies, plans) => {
+const compareFileWithCurrentData = (fileContent, employees, companies, plans, companyId) => {
   let results = [];
   let processedUsernames = [];
 
@@ -190,14 +190,11 @@ const compareFileWithCurrentData = (fileContent, employees, companies, plans) =>
       processedUsernames.push(transformedEmployeeFromFile.username);
     }
   });
-
-  console.log('finalEmployeeBeforeSend', results);
-  console.log('oldEmployees', employees);
   return results;
 };
 
 
-export const processFile = (file, employees, companies, plans, onSuccess, onError) => {
+export const processFile = (file, employees, companies, plans, companyId, onSuccess, onError) => {
   try {
     if (!isFileValid(file)) {
       throw new ProcessingError('Invalid file type or size. Max allowed size: 25MB', 'FILE_VALIDATION_ERROR');
@@ -207,8 +204,7 @@ export const processFile = (file, employees, companies, plans, onSuccess, onErro
       file,
       (parsedData) => {
         validateData(parsedData);
-        console.log(parsedData, 'parsedData');
-        const comparedData = compareFileWithCurrentData(parsedData, employees, companies, plans);
+        const comparedData = compareFileWithCurrentData(parsedData, employees, companies, plans, companyId);
         onSuccess(comparedData);
       },
       onError

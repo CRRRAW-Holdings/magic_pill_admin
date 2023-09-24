@@ -140,6 +140,7 @@ function Employee() {
       employees,
       companies,
       plans,
+      companyId,
       (comparedData) => {
         dispatch(setProcessedCsvData(comparedData));
         setIsComparisonDialogOpen(true);
@@ -166,7 +167,7 @@ function Employee() {
           </AddEmployeeButton>
           <input type="file" ref={fileRef} style={{ display: 'none' }} onChange={handleFileChange} />
           <UploadCSVButton variant="contained" onClick={() => fileRef.current.click()}>
-            Upload Company CSV
+            Upload File
           </UploadCSVButton>
         </ActionContainer>
       </NavbarContainer>

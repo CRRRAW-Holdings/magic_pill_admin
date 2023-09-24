@@ -31,7 +31,7 @@ const addTabColumns = [
 
 const updateTabColumns = addTabColumns;
 
-const disableTabColumns = ['email', 'dob', 'username'];
+const disableTabColumns = ['first_name', 'last_name', 'email', 'dob'];
 
 const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companies, plans }) => {
   const dispatch = useDispatch();
