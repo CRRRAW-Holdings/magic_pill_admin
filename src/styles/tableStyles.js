@@ -18,11 +18,15 @@ export const UpdateTabFirstRow = styled(TableRow)(({ theme }) => ({
   fontWeight: 'bold',
 }));
 
-// Table Row for headers with a grey background and bold font
 export const HeaderTableRow = styled(TableRow)(({ theme }) => ({
   backgroundColor: theme.palette.grey[200],
   fontWeight: 'bold',
+  position: 'sticky',
+  top: 0,
+  zIndex: 1,
+  borderBottom: `2px solid ${theme.palette.grey.main}`,
 }));
+
 
 // TableRow with different background colors based on the row type (e.g., add, edit, disable)
 export const StyledTableRow = styled(TableRow)(({ theme, rowType }) => {
@@ -36,7 +40,7 @@ export const StyledTableRow = styled(TableRow)(({ theme, rowType }) => {
     edit: {
       '&:hover': { backgroundColor: theme.palette.warning.light, borderRadius: '5px' },
       '&:active': { backgroundColor: theme.palette.warning.light, borderRadius: '5px' },
-      backgroundColor: theme.palette.baseWhite.main,
+      backgroundColor: theme.palette.error.main,
       borderRadius: '5px',
     },
     disable: {
@@ -52,9 +56,6 @@ export const StyledTableRow = styled(TableRow)(({ theme, rowType }) => {
 // Table with minimum width and adjusted cell borders
 export const StyledTable = styled(Table)(({ theme }) => ({
   minWidth: '650px',
-  '& thead th': {
-    borderBottom: `2px solid ${theme.palette.grey.main}`,
-  },
   '& tbody td': {
     borderBottom: `1px solid ${theme.palette.grey.light}`,
     borderRight: `1px solid ${theme.palette.grey.light}`,
@@ -82,11 +83,7 @@ export const StyledTableCell = styled(TableCell)(({ theme }) => ({
 export const HeaderCell = styled(TableCell)(({ theme }) => ({
   fontWeight: 'bold',
   color: theme.palette.text.primary,
-  borderBottom: '2px solid ' + theme.palette.divider,
-  position: 'sticky',
-  top: 0,
-  zIndex: 1,  // Optional: to ensure header stays on top
-  textAlign: 'left'
+  backgroundColor: theme.palette.grey[200],
 }));
 
 
