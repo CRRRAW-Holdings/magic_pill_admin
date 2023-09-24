@@ -243,7 +243,13 @@ def add_user():
         with Session() as session:
             session.add(new_user)
             session.commit()
-        return jsonify(results=[{"success": True, "message": "User added successfully"}])
+            added_user = session.query(User).filter(User.username == data["username"]).one_or_none()
+
+            if added_user is None:
+                return jsonify(results=[{"error": "User not found after add", "message": "There was an error adding the user."}]), 500
+            added_user_data = added_user.serialize()
+
+            return jsonify(results=[{"success": True, "message": "User added successfully", "user": added_user_data}])
     except exc.IntegrityError as e:
         return jsonify(results=[{"error": "Database Integrity Error", "message": str(e)}]), 500
     except exc.SQLAlchemyError as e:
