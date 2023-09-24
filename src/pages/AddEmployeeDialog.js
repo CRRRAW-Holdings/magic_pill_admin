@@ -44,11 +44,11 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
 
     const username = `${employeeData.email}_${formattedDOB}_${employeeData.insurance_company_id}`;
 
-    const updatedEmployeeData = {
+    const addedEmployeeData = {
       ...employeeData,
       username,
     };
-    dispatch(addEmployeeThunk({ companyId, employeeData: updatedEmployeeData }))
+    dispatch(addEmployeeThunk({ companyId, employeeData: addedEmployeeData }))
       .then(action => {
         if (addEmployeeThunk.fulfilled.match(action)) {
           setEmployeeData({
