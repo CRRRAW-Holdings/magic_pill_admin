@@ -12,11 +12,11 @@ const getPlanNameFromId = (planId, plans) => {
 
 const getCompanyNameFromInsuranceId = (insuranceId, companies) => {
   const company = companies.find(c => c.insurance_company_id === insuranceId);
-  return company ? company.admin_username : null;
+  return company ? company.insurance_company_name : null;
 };
 
 const getInsuranceIdFromCompanyName = (companyName, companies) => {
-  const company = companies.find(c => c.admin_username === companyName);
+  const company = companies.find(c => c.insurance_company_name === companyName);
   return company ? company.insurance_company_id : null;
 };
 

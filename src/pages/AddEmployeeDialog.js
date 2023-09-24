@@ -55,13 +55,13 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
   const handleSubmit = () => {
     const formattedDOB = employeeData.dob;
 
-    const username = `${employeeData.email}_${formattedDOB}_${employeeData.insurance_company_id}`;
+    const username = `${employeeData.email}_${formattedDOB}_${companyId}`;
     const addedEmployeeData = {
       address: employeeData.address,
       insurance_company_id: parseInt(companyId, 10),
       magic_pill_plan_id: employeeData.magic_pill_plan_id,
       age: employeeData.age,
-      company: getCompanyNameFromInsuranceId(),
+      company: getCompanyNameFromInsuranceId(parseInt(companyId, 10), companies),
       dob: formattedDOB,
       email: employeeData.email,
       first_name: employeeData.first_name,
