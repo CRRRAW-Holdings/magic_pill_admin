@@ -1,11 +1,44 @@
 import { createTheme } from '@mui/material';
 import Background from './assets/images/background.png';
 
+export const commonButtonStyles = {
+  minWidth: '100px',
+  height: '40px',
+  padding: '10px 20px',
+};
+
+export const inputStyles = ({ theme }) => ({
+  padding: '10px',
+  display: 'block',  
+  fontFamily: 'Roboto, sans-serif',  
+  '& .MuiInputBase-root': {
+    color: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',  
+    border: '1px solid #ddd',  
+    borderRadius: '4px',
+    '& .MuiInputBase-input': {
+      color: '#fff',
+      '&::placeholder': {
+        color: '#fff',  
+      },
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: '#888',  
+    },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: '#888',  
+    },
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#ddd',  
+  },
+});
+
 const theme = createTheme({
   palette: {
     baseWhite: {
       main: '#FFFFFF',
-      contrastText: '#000000', // Assuming black text will be contrasted on a white background
+      contrastText: '#000000',
     },
     primary: {
       main: '#390072',
@@ -31,12 +64,6 @@ const theme = createTheme({
       dark: '#c77f00',
       contrastText: '#000',
     },
-    info: {
-      main: '#4fc3f7',
-      light: '#81d4fa',
-      dark: '#039be5',
-      contrastText: '#000',
-    },
     success: {
       main: '#66bb6a',
       light: '#8be097',
@@ -44,7 +71,17 @@ const theme = createTheme({
       contrastText: '#ffffff',
     },
     grey: {
-      main: '#c2c2c2',
+      50: '#f9f9f9',
+      100: '#f0f0f0',
+      200: '#d9d9d9',
+      300: '#c0c0c0',
+      400: '#a9a9a9',
+      500: '#919191',
+      600: '#7d7d7d',
+      700: '#696969',
+      800: '#555555',
+      900: '#414141',
+      main: '#696969',  // Equating 700 to 'main'
       light: '#bdbdbd',
       dark: '#616161',
       contrastText: '#000',
@@ -54,60 +91,6 @@ const theme = createTheme({
       light: '#336699',
       dark: '#001a33',
       contrastText: '#ffffff',
-    },
-    lunarSilver: {
-      main: '#b0b0b0',
-      light: '#e0e0e0',
-      dark: '#808080',
-      contrastText: '#000000',
-    },
-    coralReef: {
-      main: '#FF6B6B',
-      light: '#FF9E9E',
-      dark: '#CC4B4B',
-      contrastText: '#ffffff',
-    },
-    earthyClay: {
-      main: '#704214',
-      light: '#A67238',
-      dark: '#45240E',
-      contrastText: '#ffffff',
-    },
-    mountainPeak: {
-      main: '#848482',
-      light: '#B0B0AE',
-      dark: '#575754',
-      contrastText: '#ffffff',
-    },
-    urbanJungle: {
-      main: '#4E8F3A',
-      light: '#7BC468',
-      dark: '#315E25',
-      contrastText: '#ffffff',
-    },
-    desertMirage: {
-      main: '#FFD27F',
-      light: '#FFEAB5',
-      dark: '#CBA152',
-      contrastText: '#000000',
-    },
-    nauticalNavy: {
-      main: '#001F3F',
-      light: '#004080',
-      dark: '#001133',
-      contrastText: '#ffffff',
-    },
-    lushLavender: {
-      main: '#B57EDC',
-      light: '#D9A8EA',
-      dark: '#8E5BAF',
-      contrastText: '#000000',
-    },
-    icyGlacier: {
-      main: '#A0E6FF',
-      light: '#D1FAFF',
-      dark: '#6EC3DB',
-      contrastText: '#000000',
     },
     rusticRedwood: {
       main: '#8B0000',

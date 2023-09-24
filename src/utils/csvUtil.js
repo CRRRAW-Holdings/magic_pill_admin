@@ -1,13 +1,18 @@
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
+import {
+  getPlanIdFromName,
+  getCompanyNameFromInsuranceId,
+} from './mappingUtils';
+import { formatDateToYYYYMMDD } from './fieldUtil';
+import ProcessingError from '../errors/error';
 
 const isValidFileType = (fileName) => {
   return /.csv$/i.test(fileName) || /\.xls(x)?$/i.test(fileName);
-
 };
 
 const isValidFileSize = (fileSize) => {
-  const maxSize = 5 * 1024 * 1024; // Example: 5MB
+  const maxSize = 25 * 1024 * 1024; // 25MB
   return fileSize <= maxSize;
 };
 
@@ -16,7 +21,6 @@ const isFileValid = (file) => {
 };
 
 const parseCSV = (content) => {
-  console.log(content, 'content');
   return Papa.parse(content, {
     header: true,
     dynamicTyping: true,
@@ -25,7 +29,7 @@ const parseCSV = (content) => {
 };
 
 const parseXLSX = (content) => {
-  const workbook = XLSX.read(content, { type: 'binary' });
+  const workbook = XLSX.read(content, { type: 'binary', cellDates: true });
   const firstSheetName = workbook.SheetNames[0];
   const worksheet = workbook.Sheets[firstSheetName];
   return XLSX.utils.sheet_to_json(worksheet);
@@ -51,7 +55,6 @@ const readFileContent = (file, onSuccess, onError) => {
       };
       reader.readAsBinaryString(file);
     } else {
-      // Fallback for browsers that don't support readAsBinaryString
       reader.onload = function (evt) {
         let data = new Uint8Array(evt.target.result);
         let binaryString = '';
@@ -63,88 +66,158 @@ const readFileContent = (file, onSuccess, onError) => {
       reader.readAsArrayBuffer(file);
     }
   } else {
-    onError('Unsupported file type.');
+    onError(`Unsupported file type: ${fileType}`);
   }
 };
-const transformFileEmployee = (employee) => {
-  return {
-    username: employee[''],
-    email: employee._1,
-    insurance_company_id: employee._3,
-    magic_pill_plan_id: employee._2,
-  };
+
+const validateData = (parsedData) => {
+  for (const record of parsedData) {
+    if (!record.email || !record.dob /* ... other validations */) {
+      throw new ProcessingError('Invalid data: missing required fields.', 'VALIDATION_ERROR');
+    }
+    // ... other validations
+  }
 };
 
-const transformTempEmployee = (tempEmployee) => {
-  // Transform the employee into the desired structure
-  return {
-    username: tempEmployee.username,  // Replace 'someField' with the actual field names
-    email: tempEmployee.email,
-    insurance_company_id: tempEmployee.anotherField, // Adjust accordingly
-    magic_pill_plan_id: tempEmployee.yetAnotherField, // Adjust accordingly
-    // Add other fields if needed
-  };
+const transformEmployee = (employee, companies, plans) => {
+  try {
+    const { email, dob, first_name, insurance_company_id, plan_name, is_active, address, last_name, phone, is_dependent } = employee;
+    const formattedDOB = formatDateToYYYYMMDD(dob);
+
+    const formattedPhone = typeof phone === 'number'
+      ? phone.toString()
+      : phone.replace(/[^0-9-]/g, '');
+
+
+    return {
+      email: email,
+      dob: formattedDOB,
+      username: `${email}_${formattedDOB}_${insurance_company_id}`,
+      insurance_company_id: insurance_company_id,
+      magic_pill_plan_id: getPlanIdFromName(plan_name, plans),
+      is_active: is_active,
+      address: address,
+      company: getCompanyNameFromInsuranceId(insurance_company_id, companies),
+      first_name: first_name,
+      last_name: last_name,
+      phone: formattedPhone,
+      is_dependent: is_dependent,
+    };
+  } catch (error) {
+    throw new ProcessingError('Error transforming employee data: ' + error.message, 'TRANSFORM_ERROR');
+  }
 };
 
-const compareFileWithCurrentData = (fileContent, employees) => {
+const required_fields = [
+  'username',
+  'email',
+  'first_name',
+  'insurance_company_id',
+  'magic_pill_plan_id',
+  'last_name',
+  'phone',
+  'address',
+  'dob',
+  'is_active',
+  'is_dependent'
+];
+
+
+const hasDifferences = (oldEmployee, newEmployee, ignoreFields = []) => {
+  let differencesFound = false;
+  for (const key of required_fields) {
+    if (!ignoreFields.includes(key) && oldEmployee[key] !== newEmployee[key]) {
+      console.log(`Field: ${key}`, `Old Value: ${oldEmployee[key]}`, ` New Value: ${newEmployee[key]}`);
+      differencesFound = true;
+      break;
+    }
+  }
+  return differencesFound;
+};
+
+const compareFileWithCurrentData = (fileContent, employees, companies, plans) => {
   let results = [];
-  let tempEmployees = [...employees]; 
+  let processedUsernames = [];
 
-  // Ignore the first two entries in the fileContent
-  for (let index = 2; index < fileContent.length; index++) {
-    const fileEmployee = fileContent[index];
-    const transformedEmployee = transformFileEmployee(fileEmployee); // assuming this function exists
+  fileContent.forEach(fileEmployee => {
+    const transformedEmployeeFromFile = transformEmployee(fileEmployee, companies, plans);
 
-    const match = tempEmployees.find(emp => emp.username === transformedEmployee.username);
+    const matchedEmployees = employees.filter(emp =>
+      emp.email === transformedEmployeeFromFile.email &&
+      emp.insurance_company_id === transformedEmployeeFromFile.insurance_company_id &&
+      emp.dob === transformedEmployeeFromFile.dob
+    );
 
-    if (match) {
-      if (JSON.stringify(match) !== JSON.stringify(transformedEmployee)) {
+    if (matchedEmployees.length === 1) {
+      const matchedEmployee = matchedEmployees[0];
+
+      if (matchedEmployee.first_name === transformedEmployeeFromFile.first_name && matchedEmployee.dob === transformedEmployeeFromFile.dob) {
+        const isActiveChanged = matchedEmployee.is_active !== transformedEmployeeFromFile.is_active;
+        if (isActiveChanged && !hasDifferences(matchedEmployee, transformedEmployeeFromFile, ['is_active'])) {
+          results.push({
+            action: 'toggle',
+            user_data: {
+              ...transformedEmployeeFromFile,
+              user_id: matchedEmployee.user_id
+            }
+          });
+        } else if (hasDifferences(matchedEmployee, transformedEmployeeFromFile)) {
+          results.push({
+            action: 'update',
+            user_data: {
+              ...transformedEmployeeFromFile,
+              user_id: matchedEmployee.user_id
+            }
+          });
+        }
+      } else {
         results.push({
-          action: 'update',
-          oldData: match,
-          newData: transformedEmployee
+          action: 'add',
+          user_data: transformedEmployeeFromFile,
         });
       }
-      // Remove the matched employee so they won't be marked as 'disable'
-      tempEmployees = tempEmployees.filter(emp => emp.username !== transformedEmployee.username);
+
+      processedUsernames.push(transformedEmployeeFromFile.username);
+      employees = employees.filter(emp => emp.username !== matchedEmployee.username);
+    } else if (matchedEmployees.length > 1) {
+      throw new ProcessingError('Duplicate data found for: ' + JSON.stringify(transformedEmployeeFromFile), 'DUPLICATE_DATA_ERROR');
     } else {
       results.push({
         action: 'add',
-        oldData: null,
-        newData: transformedEmployee
+        username: transformedEmployeeFromFile.username,
+        user_data: transformedEmployeeFromFile
       });
+      processedUsernames.push(transformedEmployeeFromFile.username);
     }
-  }
-
-  tempEmployees.forEach(employee => {
-    // If you need to transform old stored employee data, use this:
-    const transformedTempEmployee = transformTempEmployee(employee); 
-    // Otherwise, you can just use "employee"
-    
-    results.push({
-      action: 'disable',
-      oldData: transformedTempEmployee,
-      newData: null
-    });
   });
 
+  console.log('finalEmployeeBeforeSend', results);
+  console.log('oldEmployees', employees);
   return results;
 };
 
 
+export const processFile = (file, employees, companies, plans, onSuccess, onError) => {
+  try {
+    if (!isFileValid(file)) {
+      throw new ProcessingError('Invalid file type or size. Max allowed size: 25MB', 'FILE_VALIDATION_ERROR');
+    }
 
-export const processFile = (file, employees, onSuccess, onError) => {
-  if (!isFileValid(file)) {
-    onError('Invalid file type or size.');
-    return;
+    readFileContent(
+      file,
+      (parsedData) => {
+        validateData(parsedData);
+        console.log(parsedData, 'parsedData');
+        const comparedData = compareFileWithCurrentData(parsedData, employees, companies, plans);
+        onSuccess(comparedData);
+      },
+      onError
+    );
+  } catch (error) {
+    if (error instanceof ProcessingError) {
+      onError(error.message);
+    } else {
+      onError('An unexpected error occurred.');
+    }
   }
-
-  readFileContent(
-    file,
-    (parsedData) => {
-      const comparedData = compareFileWithCurrentData(parsedData, employees);
-      onSuccess(comparedData);
-    },
-    onError
-  );
 };

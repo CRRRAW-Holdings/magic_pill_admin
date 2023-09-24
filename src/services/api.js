@@ -8,6 +8,10 @@ const instance = axios.create({
   }
 });
 
+// Landing
+export const fetchAdminByEmail = (email) => {
+  return instance.get(`/admins/email/${email}`);
+};
 
 // Employee
 export const fetchEmployeesFromCompany = (companyId) => {
@@ -20,7 +24,6 @@ export const addEmployeeToCompany = (companyId, employeeData) => {
 
 export const updateEmployeeDetails = (employeeData) => {
   // Assuming an endpoint to update an employee looks like this:
-  console.log(`upDATE user ${employeeData.user_id}`, employeeData);
   return instance.post(`/user/update/${employeeData.user_id}`, employeeData);
 };
 
@@ -39,10 +42,15 @@ export const fetchCompaniesFromApi = () => {
   return instance.get('/company');
 };
 
+export const fetchPlansFromApi = () => {
+  return instance.get('/plans');
+};
+
 export const uploadCSVData = (csvData, onProgress) => {
-  return instance.post('/api/upload', csvData, {
+  console.log(csvData,'apiCSVDATA');
+  return instance.post('/user/bulk', csvData, {
     headers: {
-      'Content-Type': 'text/csv'
+      'Content-Type': 'application/json'
     },
     onUploadProgress: (progressEvent) => {
       const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);

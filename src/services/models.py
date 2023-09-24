@@ -28,7 +28,7 @@ class User(Base):
     last_name = Column(String)
     phone = Column(String)
     address = Column(Text)
-    dob = Column(Date)
+    dob = Column(String)
     age = Column(Integer)
     company = Column(String)
     insurance_company_id = Column(Integer, ForeignKey('insurance_companies.insurance_company_id'))

@@ -37,8 +37,8 @@ const companySlice = createSlice({
       })
       .addCase(fetchCompanies.rejected, (state, action) => {
         state.hasError = true;
-        state.errorMessage = 'There was an issue loading the companies. Please try again later.';
-      });
+        state.errorMessage = action.error.message || 'There was an issue loading the companies. Please try again later.';
+      });      
   }
 });
 

@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -7,70 +8,101 @@ import {
   toggleEmployeeStatusThunk,
   setProcessedCsvData,
 } from '../slices/employeeSlice';
-import { processFile } from '../utils/csvUtil';
-import 'react-toastify/dist/ReactToastify.css';
-import { toast } from 'react-toastify';
-import { ToastContainer } from 'react-toastify';
+import { fetchCompanies } from '../slices/companySlice';
+import { fetchPlans } from '../slices/planSlice'; // Import fetchPlans
 
+import { processFile } from '../utils/csvUtil';
+import { toast } from 'react-toastify';
+import theme from '../theme';
 
 import {
   TableBody,
   TableHead,
-  TableRow,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
-import {
-  StyledPaper,
-  ActualCompanyName,
-  CompanyName,
-  AddEmployeeButton,
-  UploadCSVButton,
-  StyledTableContainer,
-  StyledTable,
-  EmployeeRow,
-  StyledTableCell,
-  HeaderCell,
-  EditButton,
-  DisableButton,
-  EnableButton,
-  LockedTooltip,
-  StyledSearchBar,
-} from '../styles/styledComponents';
+import PersonIcon from '@mui/icons-material/Person';
 
 import AddEmployeeDialog from './AddEmployeeDialog';
 import EditEmployeeDialog from './EditEmployeeDialog';
 import ComparisonDialog from './ComparisonDialog';
+import { CompanyName, LockedTooltip, StyledPaper, StyledSearchBar } from '../styles/styledComponents';
+import { EmployeeRow, HeaderCell, HeaderTableRow, StyledTable, StyledTableCell, StyledTableContainer } from '../styles/tableStyles';
+import { AddEmployeeButton, DisableButton, EditButton, EnableButton, UploadCSVButton } from '../styles/buttonComponents';
 
 
 const defaultEmployees = [];
 
+const SortableHeaderCell = ({ children, sortOrder, column, toggleSort }) => (
+  <HeaderCell onClick={() => toggleSort(column)} style={{ cursor: 'pointer' }}>
+    {children} {sortOrder.column === column ? (sortOrder.direction === 'asc' ? '↑' : '↓') : null}
+  </HeaderCell>
+);
+
+SortableHeaderCell.propTypes = {
+  children: PropTypes.node.isRequired,
+  sortOrder: PropTypes.shape({
+    column: PropTypes.string.isRequired,
+    direction: PropTypes.oneOf(['asc', 'desc']).isRequired
+  }).isRequired,
+  column: PropTypes.string.isRequired,
+  toggleSort: PropTypes.func.isRequired
+};
+
 function Employee() {
   const { id: companyId } = useParams();
   const dispatch = useDispatch();
+
+  // Data State
   const employees = useSelector((state) => state.employee?.employees || defaultEmployees);
+  const companies = useSelector((state) => state.company.companies);
+  const plans = useSelector((state) => state.plan.plans);
   const companyName = useSelector((state) => state.employee.companyName);
   const selectedEmployee = useSelector((state) => state.employee.selectedEmployee);
-  // const [isUploadSuccessful, setIsUploadSuccessful] = useState(false);
+  const processedCsvData = useSelector((state) => state.employee.processedCsvData) || [];
+
+  //Table State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState({ column: 'status', direction: 'asc' });
+
+  //Dialog State
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   const [isEditEmployeeDialogOpen, setIsEditEmployeeDialogOpen] = useState(false);
   const [isComparisonDialogOpen, setIsComparisonDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
-  console.log(searchQuery);
-  const processedCsvData = useSelector((state) => state.employee.processedCsvData) || [];
   useEffect(() => {
     dispatch(fetchEmployees(companyId));
+    dispatch(fetchCompanies());
+    dispatch(fetchPlans());
   }, [companyId, dispatch]);
 
   const fileRef = useRef(null);
 
-  const filteredEmployees = employees.filter(employee => {
+  const toggleSort = (column) => {
+    setSortOrder(prevOrder => ({
+      column,
+      direction: prevOrder.column === column && prevOrder.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const filteredEmployees = useMemo(() => {
     const searchTerm = searchQuery.toLowerCase();
-    return (
-      employee.username.toLowerCase().includes(searchTerm) ||
-      employee.email.toLowerCase().includes(searchTerm)
-    );
-  });
+    return [...employees]
+      .filter(employee =>
+        employee.username.toLowerCase().includes(searchTerm) ||
+        employee.email.toLowerCase().includes(searchTerm)
+      )
+      .sort((a, b) => {
+        const sortOrderMultiplier = sortOrder.direction === 'asc' ? 1 : -1;
+        switch (sortOrder.column) {
+        case 'status':
+          return (b.is_active - a.is_active) * sortOrderMultiplier;
+        case 'plan':
+          return a.magic_pill_plan?.plan_name.localeCompare(b.magic_pill_plan?.plan_name) * sortOrderMultiplier;
+        default:
+          return 0;
+        }
+      });
+  }, [employees, searchQuery, sortOrder]);
 
   const handleSearch = (value) => {
     setSearchQuery(value);
@@ -84,54 +116,44 @@ function Employee() {
   const toggleEmployeeStatus = (employee) => {
     dispatch(toggleEmployeeStatusThunk(employee.user_id))
       .then((value) => {
-        console.log(value.payload,'val');
         toast.success('Employee toggle successful');
       })
       .catch(() => {
         toast.error('Failed to toggle employee status!');
       });
-  };  
+  };
   const handleUserDialogClose = (updatedUser) => {
-    toast.success(`${updatedUser.username} was added successfully!`);
+    if (updatedUser.user_id) {
+      toast.success(`${updatedUser.first_name} ${updatedUser.last_name} was added successfully!`);
+    }
     setIsEditEmployeeDialogOpen(false);
   };
-  
+
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     processFile(
       file,
       employees,
+      companies,
+      plans,
       (comparedData) => {
         dispatch(setProcessedCsvData(comparedData));
         toast.success('CSV processed successfully!');
         setIsComparisonDialogOpen(true);
       },
       (error) => {
-        toast.error('Error processing CSV!');
-        console.error(error);
+        toast.error('Error processing CSV!', error);
       }
     );
-  };  
+  };
 
   return (
     <StyledPaper>
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      <div style={{ textAlign: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <CompanyName>{companyName}</CompanyName>
-        <ActualCompanyName>Employee Management</ActualCompanyName>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
         <AddEmployeeButton variant="contained" onClick={() => setIsAddEmployeeDialogOpen(true)}>
           Add Employee
         </AddEmployeeButton>
@@ -144,48 +166,69 @@ function Employee() {
       <StyledTableContainer>
         <StyledTable>
           <TableHead>
-            <TableRow>
-              <HeaderCell>Username</HeaderCell>
+            <HeaderTableRow>
+              <HeaderCell>First Name</HeaderCell>
+              <HeaderCell>Last Name</HeaderCell>
               <HeaderCell>Email</HeaderCell>
-              <HeaderCell>Company Name</HeaderCell>
-              <HeaderCell>Plan ID</HeaderCell>
-              <HeaderCell>Actions</HeaderCell>
-            </TableRow>
+              <SortableHeaderCell sortOrder={sortOrder} column="plan" toggleSort={toggleSort}>Plan</SortableHeaderCell>
+              <SortableHeaderCell sortOrder={sortOrder} column="status" toggleSort={toggleSort}>Status</SortableHeaderCell>
+              <HeaderCell>Edit</HeaderCell>
+            </HeaderTableRow>
           </TableHead>
           <TableBody>
             {filteredEmployees.map((employee) => (
               <EmployeeRow key={employee.user_id} isActive={employee.is_active}>
                 <StyledTableCell>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {employee.is_active ? (
+                      <>
+                        <PersonIcon style={{ marginRight: '8px', color: theme.palette.primary.light }} />
+                        {employee.first_name}
+                      </>
+                    ) : (
+                      <LockedTooltip title="Employee is disabled">
+                        <>
+                          <LockIcon color="error" style={{ marginRight: '8px' }} />
+                          {employee.first_name}
+                        </>
+                      </LockedTooltip>
+                    )}
+                  </div>
+                </StyledTableCell>
+                <StyledTableCell>
                   {employee.is_active ? (
-                    employee.username
+                    employee.last_name
                   ) : (
                     <LockedTooltip title="Employee is disabled">
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <LockIcon color="error" style={{ marginRight: '8px' }} />
-                        {employee.username}
-                      </div>
+                      employee.last_name
                     </LockedTooltip>
                   )}
                 </StyledTableCell>
                 <StyledTableCell>{employee.email}</StyledTableCell>
-                <StyledTableCell>{employee.magic_pill_plan_id}</StyledTableCell>
-                <StyledTableCell>{employee.email}</StyledTableCell>
+                <StyledTableCell>{employee.magic_pill_plan?.plan_name}</StyledTableCell>
                 <StyledTableCell>
-                  <EditButton variant="contained" onClick={() => editEmployee(employee)}>Edit</EditButton>
-                  {employee.is_active ? (
-                    <DisableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Disable</DisableButton>
-                  ) : (
-                    <EnableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Enable</EnableButton>
-                  )}
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    {employee.is_active ? (
+                      <DisableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Disable</DisableButton>
+                    ) : (
+                      <EnableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Enable</EnableButton>
+                    )}
+                  </div>
                 </StyledTableCell>
+                <StyledTableCell>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <EditButton variant="contained" onClick={() => editEmployee(employee)}>Edit</EditButton>
+                  </div>
+                </StyledTableCell>
+
               </EmployeeRow>
             ))}
           </TableBody>
         </StyledTable>
       </StyledTableContainer>
-      <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} />
-      {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} />}
-      <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData} />
+      <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} companies={companies} plans={plans} />
+      {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} companies={companies} plans={plans} />}
+      <ComparisonDialog open={isComparisonDialogOpen} onClose={() => setIsComparisonDialogOpen(false)} processedCsvData={processedCsvData} companyId={companyId} companies={companies} plans={plans} />
     </StyledPaper>
   );
 }
