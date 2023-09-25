@@ -27,7 +27,7 @@ export const sendSignInLinkToEmailAction = createAsyncThunk(
   async (email, { rejectWithValue }) => {
     try {
       const actionCodeSettings = {
-        url: `${process.env.REACT_APP_BASE_URL}/company`,
+        url: `${process.env.REACT_APP_BASE_URL}/signin-with-email`,
         handleCodeInApp: true,
       };
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
@@ -42,13 +42,34 @@ export const sendSignInLinkToEmailAction = createAsyncThunk(
 export const signInWithEmailLinkAction = createAsyncThunk(
   'auth/signInWithEmailLink',
   async (_, { rejectWithValue }) => {
-    const emailLink = window.location.href;
+    const url = new URL(window.location.href);
+    const params = new URLSearchParams(url.search);
+    // const apiKey = params.get('apiKey');
+    // const oobCode = params.get('oobCode');
+    // const mode = params.get('mode');
+    // ... (other parameters you need)
+    console.log('hehere');
     try {
       const email = window.localStorage.getItem('emailForSignIn');
-      if (!isSignInWithEmailLink(auth, emailLink) || !email) {
+      if (!email || !isSignInWithEmailLink(auth, window.location.href)) {
         throw new Error('Invalid email sign-in link.');
       }
 
+      // At this point, you could store the parameters in local storage
+      // or wherever else they are needed.
+      // ...
+
+      // Now, clean up the URL by removing the sensitive query parameters.
+      params.delete('apiKey');
+      params.delete('oobCode');
+      params.delete('mode');
+      params.delete('lang');
+
+      // ... (other parameters you want to remove)
+      const cleanUrl = `${url.origin}${url.pathname}?${params.toString()}`;
+      window.history.replaceState(null, '', cleanUrl);
+
+      const emailLink = window.location.href;  // This URL now has the sensitive params removed
       const result = await signInWithEmailLink(auth, email, emailLink);
       window.localStorage.removeItem('emailForSignIn');
       return result.admin;
@@ -57,6 +78,8 @@ export const signInWithEmailLinkAction = createAsyncThunk(
     }
   }
 );
+
+
 
 export const signOutAction = createAsyncThunk(
   'auth/signOut',

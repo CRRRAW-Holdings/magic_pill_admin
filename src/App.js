@@ -8,6 +8,7 @@ import Employee from './pages/Employee';
 import NotFound from './pages/NotFound';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import EmailSignInPage from './pages/EmailSignInPage';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
               <Route path='/' element={<Landing />} />
               <Route path='/company' element={<Company />} />
               <Route path='/company/:id' element={<Employee />} />
+              <Route path='/signin-with-email' element={<EmailSignInPage />} />  {/* New route */}
               <Route path='*' element={<NotFound />} />
             </Routes>
           </Router>
@@ -31,3 +33,4 @@ function App() {
 }
 
 export default App;
+

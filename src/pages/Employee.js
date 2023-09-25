@@ -208,7 +208,7 @@ function Employee() {
                     employee.last_name
                   ) : (
                     <LockedTooltip title="Employee is disabled">
-                      employee.last_name
+                      {employee.last_name}
                     </LockedTooltip>
                   )}
                 </StyledTableCell>
