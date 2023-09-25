@@ -51,35 +51,28 @@ export const signInWithEmailLinkAction = createAsyncThunk(
     console.log('hehere');
     try {
       const email = window.localStorage.getItem('emailForSignIn');
-      if (!email || !isSignInWithEmailLink(auth, window.location.href)) {
+      const emailLink = window.location.href;
+
+      if (!email || !isSignInWithEmailLink(auth, emailLink)) {
         throw new Error('Invalid email sign-in link.');
       }
 
-      // At this point, you could store the parameters in local storage
-      // or wherever else they are needed.
-      // ...
-
-      // Now, clean up the URL by removing the sensitive query parameters.
       params.delete('apiKey');
       params.delete('oobCode');
       params.delete('mode');
       params.delete('lang');
 
-      // ... (other parameters you want to remove)
       const cleanUrl = `${url.origin}${url.pathname}?${params.toString()}`;
       window.history.replaceState(null, '', cleanUrl);
-
-      const emailLink = window.location.href;  // This URL now has the sensitive params removed
       const result = await signInWithEmailLink(auth, email, emailLink);
-      window.localStorage.removeItem('emailForSignIn');
+      console.log(result);
       return result.admin;
     } catch (error) {
+      console.log(error);
       return rejectWithValue(error.message);
     }
   }
 );
-
-
 
 export const signOutAction = createAsyncThunk(
   'auth/signOut',

@@ -11,10 +11,9 @@ const EmailSignInPage = () => {
   useEffect(() => {
     const signIn = async () => {
       const resultAction = await dispatch(signInWithEmailLinkAction());
-      if (signInWithEmailLinkAction.fulfilled.match(resultAction)) {
-        console.warn('company');
-        console.log('company');
-        navigate('/company');  // Redirect to /company upon successful sign-in
+      console.warn('resultAction.meta.requestStatus',resultAction.meta.requestStatus `` );
+      if (resultAction.meta.requestStatus === 'fulfilled') {
+        navigate('/company');
       }
     };
     signIn();

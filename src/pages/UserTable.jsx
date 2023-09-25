@@ -55,7 +55,7 @@ const UserTable = ({
                       key={column}
                       style={
                         user.changedFields?.includes(column)
-                          ? { backgroundColor: 'yellow' }  // Highlighted style
+                          ? { background: 'linear-gradient(45deg, #c77f00 30%, #FF8E53 90%)', border: 0, boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)', }
                           : {}
                       }
                     >

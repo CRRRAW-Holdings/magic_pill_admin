@@ -39,10 +39,10 @@ const columnToTitleMapping = {
 
 const addTabColumns = [
   'email', 'plan_name', 'is_active',
-  'address', 'dob', 'age', 'company', 'first_name', 'last_name', 'phone'
+  'address', 'dob', 'company', 'first_name', 'last_name',
 ];
 
-const updateTabColumns = addTabColumns;
+const updateTabColumns = addTabColumns;//make it prioritize differencecolumns just for this line
 
 const disableTabColumns = ['is_active','first_name', 'last_name','is_active', 'email', 'dob'];
 
@@ -68,9 +68,13 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
       return {};
     }
   };
-
   const handleApprove = () => {
-    const dataToUpload = [...added, ...edited, ...disabled].filter(item => checkedItems.includes(item.user_data.username));
+    const dataToUpload = [...added, ...edited, ...disabled]
+      .filter(item => checkedItems.includes(item.user_data.username))
+      .map(item => ({
+        action: item.action,
+        user_data: item.user_data,
+      }));
     dispatch(uploadCSVThunk(dataToUpload))
       .then((action) => {
         if (action.type === 'employee/uploadCSV/fulfilled') {
