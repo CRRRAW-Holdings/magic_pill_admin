@@ -12,6 +12,7 @@ import { StyledCheckbox } from '../styles/styledComponents';
 const UserTable = ({
   type,
   columns,
+  columnMapping,
   users,
   handleSelectAll,
   selectAll,
@@ -33,8 +34,8 @@ const UserTable = ({
                   checked={selectAll[type]}
                 />
               </IconTableCell>
-              {columns.map(col => (
-                <HeaderCell key={col} style={{ fontWeight: 'bold' }}>{col}</HeaderCell>
+              {columns.map(column => (
+                <HeaderCell key={column} style={{ fontWeight: 'bold' }}>{columnMapping[column]}</HeaderCell>
               ))}
             </HeaderTableRow>
           </TableHead>
@@ -49,10 +50,17 @@ const UserTable = ({
                     />
                     <IconComponent color={type === 'added' ? 'primary' : type === 'edited' ? 'primary' : 'error'} />
                   </IconTableCell>
-                  {columns.map(col => (
-                    <StyledTableCell key={col}>
+                  {columns.map(column => (
+                    <StyledTableCell
+                      key={column}
+                      style={
+                        user.changedFields?.includes(column)
+                          ? { backgroundColor: 'yellow' }  // Highlighted style
+                          : {}
+                      }
+                    >
                       <span>
-                        {user.user_data?.[col] ?? '-'}
+                        {user.user_data?.[column] ?? '-'}
                       </span>
                     </StyledTableCell>
                   ))}
@@ -81,7 +89,8 @@ UserTable.propTypes = {
   handleSelectAll: PropTypes.func.isRequired,
   selectAll: PropTypes.objectOf(PropTypes.bool).isRequired,
   IconComponent: PropTypes.elementType.isRequired,
-  backgroundColor: PropTypes.string
+  backgroundColor: PropTypes.string,
+  columnMapping: PropTypes.object.isRequired,
 };
 
 export default UserTable;

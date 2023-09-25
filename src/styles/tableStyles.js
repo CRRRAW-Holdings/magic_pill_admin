@@ -88,6 +88,7 @@ export const HeaderCell = styled(TableCell)(({ theme }) => ({
 
 export const EmployeeRow = styled(({ isActive, ...otherProps }) => <TableRow {...otherProps} />)(({ theme, isActive }) => ({
   backgroundColor: isActive ? theme.palette.action.hover : theme.palette.error.light,
+  height: '80px',
   '&:nth-of-type(odd)': {
     backgroundColor: isActive ? 'inherit' : theme.palette.error.light,
   },
@@ -95,4 +96,3 @@ export const EmployeeRow = styled(({ isActive, ...otherProps }) => <TableRow {..
     backgroundColor: theme.palette.grey.main,
   },
 }));
-  

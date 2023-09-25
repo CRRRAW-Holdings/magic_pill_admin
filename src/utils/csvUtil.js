@@ -122,17 +122,17 @@ const required_fields = [
   'is_dependent'
 ];
 
-
 const hasDifferences = (oldEmployee, newEmployee, ignoreFields = []) => {
   let differencesFound = false;
+  let changedFields = [];
   for (const key of required_fields) {
     if (!ignoreFields.includes(key) && oldEmployee[key] !== newEmployee[key]) {
       console.log(`Field: ${key}`, `Old Value: ${oldEmployee[key]}`, ` New Value: ${newEmployee[key]}`);
       differencesFound = true;
-      break;
+      changedFields.push(key);
     }
   }
-  return differencesFound;
+  return { differencesFound, changedFields };
 };
 
 const compareFileWithCurrentData = (fileContent, employees, companies, plans, companyId) => {
@@ -145,38 +145,32 @@ const compareFileWithCurrentData = (fileContent, employees, companies, plans, co
     const matchedEmployees = employees.filter(emp =>
       emp.email === transformedEmployeeFromFile.email &&
       emp.insurance_company_id === transformedEmployeeFromFile.insurance_company_id &&
-      emp.dob === transformedEmployeeFromFile.dob
+      (emp.dob === transformedEmployeeFromFile.dob || emp.first_name === transformedEmployeeFromFile.first_name)
     );
 
     if (matchedEmployees.length === 1) {
       const matchedEmployee = matchedEmployees[0];
+      const isActiveChanged = matchedEmployee.is_active !== transformedEmployeeFromFile.is_active;
+      const diffResult = hasDifferences(matchedEmployee, transformedEmployeeFromFile, ['is_active']);
 
-      if (matchedEmployee.first_name === transformedEmployeeFromFile.first_name && matchedEmployee.dob === transformedEmployeeFromFile.dob) {
-        const isActiveChanged = matchedEmployee.is_active !== transformedEmployeeFromFile.is_active;
-        if (isActiveChanged && !hasDifferences(matchedEmployee, transformedEmployeeFromFile, ['is_active'])) {
-          results.push({
-            action: 'toggle',
-            user_data: {
-              ...transformedEmployeeFromFile,
-              user_id: matchedEmployee.user_id
-            }
-          });
-        } else if (hasDifferences(matchedEmployee, transformedEmployeeFromFile)) {
-          results.push({
-            action: 'update',
-            user_data: {
-              ...transformedEmployeeFromFile,
-              user_id: matchedEmployee.user_id
-            }
-          });
-        }
-      } else {
+      if (matchedEmployee.is_active && isActiveChanged && !diffResult.differencesFound) {
         results.push({
-          action: 'add',
-          user_data: transformedEmployeeFromFile,
+          action: 'toggle',
+          user_data: {
+            ...transformedEmployeeFromFile,
+            user_id: matchedEmployee.user_id
+          }
+        });
+      } else if (diffResult.differencesFound) {
+        results.push({
+          action: 'update',
+          user_data: {
+            ...transformedEmployeeFromFile,
+            user_id: matchedEmployee.user_id,
+          },
+          changedFields: diffResult.changedFields
         });
       }
-
       processedUsernames.push(transformedEmployeeFromFile.username);
       employees = employees.filter(emp => emp.username !== matchedEmployee.username);
     } else if (matchedEmployees.length > 1) {
@@ -190,6 +184,7 @@ const compareFileWithCurrentData = (fileContent, employees, companies, plans, co
       processedUsernames.push(transformedEmployeeFromFile.username);
     }
   });
+  console.log(results);
   return results;
 };
 

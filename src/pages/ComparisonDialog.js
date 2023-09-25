@@ -24,6 +24,19 @@ const dialogHeaderStyle = {
   alignItems: 'center',
 };
 
+const columnToTitleMapping = {
+  email: 'Email',
+  plan_name: 'Plan Name',
+  is_active: 'Is Active',
+  address: 'Address',
+  dob: 'Date of Birth',
+  age: 'Age',
+  company: 'Company',
+  first_name: 'First Name',
+  last_name: 'Last Name',
+  phone: 'Phone',
+};
+
 const addTabColumns = [
   'email', 'plan_name', 'is_active',
   'address', 'dob', 'age', 'company', 'first_name', 'last_name', 'phone'
@@ -31,7 +44,8 @@ const addTabColumns = [
 
 const updateTabColumns = addTabColumns;
 
-const disableTabColumns = ['first_name', 'last_name', 'email', 'dob'];
+const disableTabColumns = ['is_active','first_name', 'last_name','is_active', 'email', 'dob'];
+
 
 const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companies, plans }) => {
   const dispatch = useDispatch();
@@ -122,6 +136,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
             handleSelectAll={handleSelectAll}
             selectAll={selectAll}
             IconComponent={AddIcon}
+            columnMapping={columnToTitleMapping}
           // backgroundColor={theme.palette.success.light}
           />
         )}
@@ -133,6 +148,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
             handleSelectAll={handleSelectAll}
             selectAll={selectAll}
             IconComponent={EditIcon}
+            columnMapping={columnToTitleMapping}
           // backgroundColor={theme.palette.warning.main}
           />
         )}
@@ -144,6 +160,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
             handleSelectAll={handleSelectAll}
             selectAll={selectAll}
             IconComponent={PersonOffIcon}
+            columnMapping={columnToTitleMapping}
           // backgroundColor={theme.palette.error.dark}
           />
         )}

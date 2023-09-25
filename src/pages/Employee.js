@@ -159,7 +159,7 @@ function Employee() {
   return (
     <StyledPaper>
       <NavbarContainer>
-        <CompanyName>{companyName}</CompanyName>
+        <CompanyName>{`${companyName} (${companyId})`}</CompanyName>
         <ActionContainer>
           <StyledSearchBar onChange={(e) => handleSearch(e.target.value)} />
           <AddEmployeeButton variant="contained" onClick={() => setIsAddEmployeeDialogOpen(true)}>
