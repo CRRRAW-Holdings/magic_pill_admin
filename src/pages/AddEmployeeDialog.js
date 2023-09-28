@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { addEmployeeThunk } from '../slices/employeeSlice';
+import Autocomplete from '@mui/material/Autocomplete';
+
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -16,7 +18,7 @@ import { toast } from 'react-toastify';
 import { getCompanyNameFromInsuranceId } from '../utils/mappingUtils';
 import { isValidEmail } from '../utils/fieldUtil';
 
-function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
+function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employees }) {
   const dispatch = useDispatch();
   const [employeeData, setEmployeeData] = useState({
     email: '',
@@ -28,8 +30,11 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
     dob: '',
     first_name: '',
     last_name: '',
-    phone: ''
+    phone: '',
   });
+
+  // eslint-disable-next-line no-unused-vars
+  const [primaryUser, setPrimaryUser] = useState(null);
 
   const [emailError, setEmailError] = useState('');
 
@@ -102,18 +107,56 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Add Employee</DialogTitle>
       <DialogContent>
-        <TextField
-          margin="dense"
-          name="email"
-          label="Email Address"
-          type="email"
-          fullWidth
-          value={employeeData.email}
-          onChange={handleChange}
-          onBlur={handleEmailBlur}
-          error={!!emailError}
-          helperText={emailError}
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={employeeData.is_active}
+              onChange={handleCheckboxChange}
+              name="is_active"
+              color="primary"
+            />
+          }
+          label="Activate Immidiately"
         />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={employeeData.is_dependent}
+              onChange={handleCheckboxChange}
+              name="is_dependent"
+              color="primary"
+            />
+          }
+          label="Is Dependent"
+        />
+        {employeeData.is_dependent && (
+          <Autocomplete
+            options={employees}
+            getOptionLabel={(option) => option.email}
+            fullWidth
+            renderInput={(params) => (
+              <TextField {...params} label="Select Primary account" margin="dense" />
+            )}
+            value={primaryUser}
+            onChange={(event, newValue) => {
+              console.log(event, newValue);
+            }}
+          />
+        )}
+        {!employeeData.is_dependent && (
+          <TextField
+            margin="dense"
+            name="email"
+            label="Email Address"
+            type="email"
+            fullWidth
+            value={employeeData.email}
+            onChange={handleChange}
+            onBlur={handleEmailBlur}
+            error={!!emailError}
+            helperText={emailError}
+          />
+        )}
         <Select
           value={companyId}
           onChange={handleChange}
@@ -149,28 +192,6 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans }) {
             </MenuItem>
           ))}
         </Select>
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={employeeData.is_active}
-              onChange={handleCheckboxChange}
-              name="is_active"
-              color="primary"
-            />
-          }
-          label="Is Active"
-        />
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={employeeData.is_dependent}
-              onChange={handleCheckboxChange}
-              name="is_dependent"
-              color="primary"
-            />
-          }
-          label="Is Dependent"
-        />
         <TextField
           margin="dense"
           name="address"
@@ -249,6 +270,7 @@ AddEmployeeDialog.propTypes = {
       plan_name: PropTypes.string.isRequired,
     })
   ).isRequired,
+  employees: PropTypes.array.isRequired,
 };
 
 export default AddEmployeeDialog;

@@ -11,7 +11,6 @@ const EmailSignInPage = () => {
   useEffect(() => {
     const signIn = async () => {
       const resultAction = await dispatch(signInWithEmailLinkAction());
-      console.warn('resultAction.meta.requestStatus',resultAction.meta.requestStatus `` );
       if (resultAction.meta.requestStatus === 'fulfilled') {
         navigate('/company');
       }

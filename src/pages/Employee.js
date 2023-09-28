@@ -234,7 +234,7 @@ function Employee() {
           </TableBody>
         </StyledTable>
       </StyledTableContainer>
-      <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} companies={companies} plans={plans} />
+      <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} companies={companies} plans={plans} employees={employees} />
       {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} companies={companies} plans={plans} />}
       <ComparisonDialog open={isComparisonDialogOpen} onClose={handleComparisonDialogClose} processedCsvData={processedCsvData} companyId={companyId} companies={companies} plans={plans} />
     </StyledPaper>
