@@ -21,11 +21,15 @@ const isFileValid = (file) => {
 };
 
 const parseCSV = (content) => {
-  return Papa.parse(content, {
+  const result = Papa.parse(content, {
     header: true,
     dynamicTyping: true,
-    skipEmptyLines: true
-  }).data;
+    skipEmptyLines: true,
+    error: function(error, file) {
+      throw new ProcessingError('File Type and format issue', error);
+    }
+  });
+  return result.data;
 };
 
 const parseXLSX = (content) => {
