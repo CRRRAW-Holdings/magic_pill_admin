@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addEmployeeThunk } from '../slices/employeeSlice';
 import Autocomplete from '@mui/material/Autocomplete';
 
@@ -17,6 +17,7 @@ import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 import { getCompanyNameFromInsuranceId } from '../utils/mappingUtils';
 import { isValidEmail } from '../utils/fieldUtil';
+import { CircularProgress } from '@mui/material';
 
 function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employees }) {
   const dispatch = useDispatch();
@@ -31,12 +32,16 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
     first_name: '',
     last_name: '',
     phone: '',
+
   });
 
   // eslint-disable-next-line no-unused-vars
   const [primaryUser, setPrimaryUser] = useState(null);
 
   const [emailError, setEmailError] = useState('');
+
+  const isLoading = useSelector(state => state.employee.isLoading);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -58,9 +63,13 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
   };
 
   const handleSubmit = () => {
+    console.log(employeeData, 'employeeData');
+    console.log(primaryUser);
     const formattedDOB = employeeData.dob;
 
-    const username = `${employeeData.email}_${formattedDOB}_${companyId}`;
+    const email = employeeData.is_dependent ? primaryUser.email : employeeData.email;
+    console.log(email);
+    const username = `${email}_${formattedDOB}_${companyId}`;
     const addedEmployeeData = {
       address: employeeData.address,
       insurance_company_id: parseInt(companyId, 10),
@@ -68,7 +77,7 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
       age: employeeData.age,
       company: getCompanyNameFromInsuranceId(parseInt(companyId, 10), companies),
       dob: formattedDOB,
-      email: employeeData.email,
+      email: email,
       first_name: employeeData.first_name,
       is_active: employeeData.is_active,
       is_dependent: employeeData.is_dependent,
@@ -139,6 +148,7 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
             )}
             value={primaryUser}
             onChange={(event, newValue) => {
+              setPrimaryUser(newValue);
               console.log(event, newValue);
             }}
           />
@@ -242,13 +252,17 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        {isLoading && (
+          <CircularProgress size={24} />
+        )}
+        <Button onClick={onClose} color="primary" disabled={isLoading}>
           Cancel
         </Button>
-        <Button onClick={handleSubmit} color="primary">
-          Add
+        <Button onClick={handleSubmit} color="primary" disabled={isLoading}>
+          {isLoading ? 'Adding...' : 'Add'}
         </Button>
       </DialogActions>
+
     </Dialog>
   );
 }

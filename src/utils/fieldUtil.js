@@ -1,4 +1,4 @@
-export const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+export const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(email);
 
 export const formatDateToYYYYMMDD = (dateString) => {
   const date = new Date(dateString);

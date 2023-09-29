@@ -413,13 +413,14 @@ def remove_insurance_company_from_admin(admin_id):
 
 @app.route("/admins/email/<admin_email>", methods=["GET"])
 def get_admin_by_email(admin_email):
+    standardized_email = admin_email.lower()
     with Session() as session:
-        admin = session.query(Admin).filter_by(admin_email=admin_email).first()
-    
+        admin = session.query(Admin).filter_by(admin_email=standardized_email).first()
+
     if admin:
         return jsonify({
-            "exists": True, 
-	    "admin_id": admin.admin_id,
+            "exists": True,
+            "admin_id": admin.admin_id,
             "email": admin.admin_email,
             "username": admin.admin_username,
             "company_id": admin.insurance_company_id

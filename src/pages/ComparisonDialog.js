@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { uploadCSVThunk } from '../slices/employeeSlice';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
+  CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Tabs, Tab
 } from '@mui/material';
 import theme from '../theme';
@@ -44,7 +44,7 @@ const addTabColumns = [
 
 const updateTabColumns = addTabColumns;//make it prioritize differencecolumns just for this line
 
-const disableTabColumns = ['is_active','first_name', 'last_name','is_active', 'email', 'dob'];
+const disableTabColumns = ['is_active', 'first_name', 'last_name', 'is_active', 'email', 'dob'];
 
 
 const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companies, plans }) => {
@@ -52,6 +52,8 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
   const [selectedTab, setSelectedTab] = useState(0);
   const [checkedItems, setCheckedItems] = useState([]);
   const [selectAll, setSelectAll] = useState({ added: false, edited: false, disabled: false });
+
+  const isLoading = useSelector(state => state.employee.uploadProgress.isLoading);
 
   const added = processedCsvData.filter(data => data.action === 'add');
   const edited = processedCsvData.filter(data => data.action === 'update');
@@ -170,18 +172,24 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleDecline} color="primary">
+        {isLoading && (
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+            <CircularProgress />
+          </div>
+        )}
+        <Button onClick={handleDecline} color="primary" disabled={isLoading}>
           Decline Changes
         </Button>
         <Button
           onClick={handleApprove}
           color="primary"
           variant="contained"
-          disabled={checkedItems.length !== (added.length + edited.length + disabled.length)}
+          disabled={checkedItems.length !== (added.length + edited.length + disabled.length) || isLoading}
         >
           Approve Changes
         </Button>
       </DialogActions>
+
     </Dialog>
   );
 };

@@ -6,7 +6,6 @@ export const fetchEmployees = createAsyncThunk(
   async (companyId, { rejectWithValue }) => {
     try {
       const response = await fetchEmployeesFromCompany(companyId);
-      console.log(response,'fetchhhh');
       const companyData = response.data.results[0].company;
       const users = response.data.results[0].users;
 
@@ -69,16 +68,15 @@ export const uploadCSVThunk = createAsyncThunk(
     try {
       console.log(csvData);
       const response = await uploadCSVData(csvData, (progress) => {
-        api.dispatch(updateUploadProgress(progress));  // Dispatch the progress update
+        api.dispatch(updateUploadProgress(progress));
       });
+      console.log(response);
       return response;
     } catch (error) {
       return api.rejectWithValue(error.message);
     }
   }
 );
-
-// In your employeeSlice.js or where you keep your thunks
 
 export const previewCSVThunk = createAsyncThunk(
   'employee/previewCSV',
@@ -94,23 +92,19 @@ export const previewCSVThunk = createAsyncThunk(
 
 export const resetProcessedCsvData = createAction('employee/resetProcessedCsvData');
 
-
-
-
-// Your slice
 const employeeSlice = createSlice({
   name: 'employee',
   initialState: {
     uploadProgress: {
-      isLoading: false,  // A boolean flag to know if something is uploading.
-      percentage: 0,    // The upload progress as a percentage.
+      isLoading: false,
+      percentage: 0,
       message: '',
     },
     processedCsvData: [],
     isComparisonDialogOpen: false,
     companyName: null,
     employees: [],
-    loading: false,
+    isLoading: false,
     selectedEmployee: null,
     hasError: false,
     errorMessage: '',
@@ -166,19 +160,24 @@ const employeeSlice = createSlice({
       .addCase(addEmployeeThunk.pending, (state) => {
         state.hasError = false;
         state.errorMessage = '';
+        state.isLoading = true;
       })
       .addCase(addEmployeeThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
         state.employees.push(action.payload);
       })
       .addCase(addEmployeeThunk.rejected, (state, action) => {
+        state.isLoading = false;
         state.hasError = true;
         state.errorMessage = action.payload || 'There was an issue adding the employee. Please try again later.';
       })
       .addCase(updateEmployeeThunk.pending, (state) => {
         state.hasError = false;
         state.errorMessage = '';
+        state.isLoading=true;
       })
       .addCase(updateEmployeeThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
         const updatedUser = action.payload;
         // Finding the index of the user to be updated.
         const index = state.employees.findIndex(u => u.user_id === updatedUser.user_id);
@@ -189,6 +188,7 @@ const employeeSlice = createSlice({
       })
       .addCase(updateEmployeeThunk.rejected, (state, action) => {
         state.hasError = true;
+        state.isLoading = false;
         state.errorMessage = action.payload || 'There was an issue updating the employee details. Please try again later.';
       })
 
@@ -196,8 +196,10 @@ const employeeSlice = createSlice({
       .addCase(toggleEmployeeStatusThunk.pending, (state) => {
         state.hasError = false;
         state.errorMessage = '';
+        state.isLoading = true;
       })
       .addCase(toggleEmployeeStatusThunk.fulfilled, (state, action) => {
+        state.isLoading = false;
         if (action.payload) {
           const index = state.employees.findIndex(e => e.user_id === action.meta.arg);
           if (index !== -1) {
@@ -207,6 +209,7 @@ const employeeSlice = createSlice({
       })
       .addCase(toggleEmployeeStatusThunk.rejected, (state, action) => {
         state.hasError = true;
+        state.isLoading = false;
         state.errorMessage = action.payload || 'There was an issue toggling the employee status. Please try again later.';
       })
       .addCase(uploadCSVThunk.pending, (state) => {
@@ -215,13 +218,14 @@ const employeeSlice = createSlice({
         // Reset percentage
         state.uploadProgress.percentage = 0;
       })
-      .addCase(uploadCSVThunk.fulfilled, (state) => {
+      .addCase(uploadCSVThunk.fulfilled, (state, action) => {
+        state.employees = action.payload;
         state.uploadProgress.isLoading = false;
         state.uploadProgress.message = 'Upload complete!';
         state.uploadProgress.percentage = 100;
       })
       .addCase(uploadCSVThunk.rejected, (state, action) => {
-        state.loading = false;
+        state.isLoading = false;
         state.hasError = true;
         state.errorMessage = action.error.message;
         state.uploadProgress.isLoading = false;

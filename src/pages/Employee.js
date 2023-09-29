@@ -17,6 +17,7 @@ import { toast } from 'react-toastify';
 import theme from '../theme';
 
 import {
+  CircularProgress,
   TableBody,
   TableHead,
 } from '@mui/material';
@@ -61,6 +62,8 @@ function Employee() {
   const companyName = useSelector((state) => state.employee.companyName);
   const selectedEmployee = useSelector((state) => state.employee.selectedEmployee);
   const processedCsvData = useSelector((state) => state.employee.processedCsvData) || [];
+
+  const isLoading = useSelector(state => state.employee.isLoading);
 
   //Table State
   const [searchQuery, setSearchQuery] = useState('');
@@ -216,19 +219,28 @@ function Employee() {
                 <StyledTableCell>{employee.magic_pill_plan?.plan_name}</StyledTableCell>
                 <StyledTableCell>
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    {employee.is_active ? (
-                      <DisableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Disable</DisableButton>
+                    {isLoading ? (
+                      <CircularProgress size={24} />
                     ) : (
-                      <EnableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Enable</EnableButton>
+                      <>
+                        {employee.is_active ? (
+                          <DisableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Disable</DisableButton>
+                        ) : (
+                          <EnableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Enable</EnableButton>
+                        )}
+                      </>
                     )}
                   </div>
                 </StyledTableCell>
                 <StyledTableCell>
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <EditButton variant="contained" onClick={() => editEmployee(employee)}>Edit</EditButton>
+                    {isLoading ? (
+                      <CircularProgress size={24} />
+                    ) : (
+                      <EditButton variant="contained" onClick={() => editEmployee(employee)}>Edit</EditButton>
+                    )}
                   </div>
                 </StyledTableCell>
-
               </EmployeeRow>
             ))}
           </TableBody>

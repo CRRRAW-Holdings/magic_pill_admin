@@ -60,8 +60,7 @@ export const uploadCSVData = (csvData, onProgress) => {
     }
   })
     .then((response) => {
-      console.log(response);
-      return response.data;
+      return response.data?.users || [];
     })
     .catch((error) => {
       if (error.response && error.response.data) {

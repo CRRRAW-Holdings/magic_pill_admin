@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { updateEmployeeThunk } from '../slices/employeeSlice';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -12,6 +12,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import PropTypes from 'prop-types';
+import { CircularProgress } from '@mui/material';
 
 function EditEmployeeDialog({ open, onClose, employee, companyId, companies, plans }) {
   const dispatch = useDispatch();
@@ -28,6 +29,8 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
     last_name: '',
     phone: ''
   });
+
+  const isLoading = useSelector(state => state.employee.isLoading);
 
   useEffect(() => {
     if (employee) {
@@ -198,13 +201,17 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        {isLoading && (
+          <CircularProgress size={24} />
+        )}
+        <Button onClick={onClose} color="primary" disabled={isLoading}>
           Cancel
         </Button>
-        <Button onClick={handleSubmit} color="primary">
-          Update
+        <Button onClick={handleSubmit} color="primary" disabled={isLoading}>
+          {isLoading ? 'Updating...' : 'Update'}
         </Button>
       </DialogActions>
+
     </Dialog>
   );
 }
