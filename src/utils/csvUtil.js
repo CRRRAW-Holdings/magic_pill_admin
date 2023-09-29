@@ -96,7 +96,7 @@ const transformEmployee = (employee, companies, plans) => {
     return {
       email: email,
       dob: formattedDOB,
-      username: `${email}_${formattedDOB}_${insurance_company_id}`,
+      username: `${email}_${formattedDOB}_${insurance_company_id}_${first_name}"}`,
       insurance_company_id: insurance_company_id,
       magic_pill_plan_id: getPlanIdFromName(plan_name, plans),
       is_active: is_active,
@@ -151,7 +151,7 @@ const compareFileWithCurrentData = (fileContent, employees, companies, plans, co
       emp.insurance_company_id === transformedEmployeeFromFile.insurance_company_id &&
       (emp.dob === transformedEmployeeFromFile.dob || emp.first_name === transformedEmployeeFromFile.first_name)
     );
-
+    console.log('***' + transformedEmployeeFromFile.username);
     if (matchedEmployees.length === 1) {
       const matchedEmployee = matchedEmployees[0];
       const isActiveChanged = matchedEmployee.is_active !== transformedEmployeeFromFile.is_active;

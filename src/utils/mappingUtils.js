@@ -1,7 +1,6 @@
 // mappingUtils.js
-
 const getPlanIdFromName = (planName, plans) => {
-  const plan = plans.find(p => p.plan_name === planName);
+  const plan = plans.find(p => p.plan_name.toLowerCase() === planName.toLowerCase());
   return plan ? plan.magic_pill_plan_id : null;
 };
 
