@@ -96,7 +96,7 @@ const transformEmployee = (employee, companies, plans) => {
     return {
       email: email,
       dob: formattedDOB,
-      username: `${email}_${formattedDOB}_${insurance_company_id}_${first_name}"}`,
+      username: `${email}_${formattedDOB}_${insurance_company_id}_${first_name}`,
       insurance_company_id: insurance_company_id,
       magic_pill_plan_id: getPlanIdFromName(plan_name, plans),
       is_active: is_active,
