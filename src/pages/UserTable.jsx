@@ -34,8 +34,8 @@ const UserTable = ({
                   checked={selectAll[type]}
                 />
               </IconTableCell>
-              {columns.map(column => (
-                <HeaderCell key={column} style={{ fontWeight: 'bold' }}>{columnMapping[column]}</HeaderCell>
+              {columns.map((column, index) => (
+                <HeaderCell key={`${column}-${index}`} style={{ fontWeight: 'bold' }}>{columnMapping[column]}</HeaderCell>
               ))}
             </HeaderTableRow>
           </TableHead>
@@ -50,9 +50,9 @@ const UserTable = ({
                     />
                     <IconComponent color={type === 'added' ? 'primary' : type === 'edited' ? 'primary' : 'error'} />
                   </IconTableCell>
-                  {columns.map(column => (
+                  {columns.map((column, innerIndex) => (
                     <StyledTableCell
-                      key={column}
+                      key={`${column}-${index}-${innerIndex}`} 
                       style={
                         user.changedFields?.includes(column)
                           ? { background: 'linear-gradient(45deg, #c77f00 30%, #FF8E53 90%)', border: 0, boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)', }

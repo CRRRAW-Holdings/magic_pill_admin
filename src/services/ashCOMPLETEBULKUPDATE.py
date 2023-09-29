@@ -74,6 +74,8 @@ def bulk_user_operations():
     user_update_mappings = []
     user_toggle_mappings = []
 
+    company_id = data[0]["user_data"]["insurance_company_id"] if data else None
+
     for operation in data:
         action = operation.get("action")
         
@@ -86,9 +88,9 @@ def bulk_user_operations():
         else:
             results.append({"error": "Unknown Action", "message": f"Unknown action received: {action}"})
 
-    perform_bulk_operations(User, results, user_insert_mappings, user_update_mappings, user_toggle_mappings)
+    users = perform_bulk_operations(User, results, user_insert_mappings, user_update_mappings, user_toggle_mappings, company_id)
 
-    return jsonify(results=results)
+    return jsonify(results=results, users=users)
 
 
 def handle_add_action(operation, results, user_insert_mappings):
@@ -124,7 +126,7 @@ def handle_toggle_action(operation, results, user_toggle_mappings):
             else:
                 results.append({"error": "User Not Found", "message": f"User with ID {user_id} not found."})
 
-def perform_bulk_operations(model, results, inserts, updates, toggles):
+def perform_bulk_operations(model, results, inserts, updates, toggles, company_id):
     bulk_ops = [
         (inserts, "added", Session.bulk_insert_mappings),
         (updates, "updated", Session.bulk_update_mappings),
@@ -137,12 +139,14 @@ def perform_bulk_operations(model, results, inserts, updates, toggles):
                     method(model, ops)
                     results.extend([{"success": True, "message": f"User {message} successfully"} for _ in ops])
                     session.commit()
+            users = session.query(User).filter(User.insurance_company_id == company_id).all()
+        return [user.serialize() for user in users]
     except IntegrityError as e:
         logging.error(f"Database Integrity Error: {str(e)}")
-        results.extend([{"error": "Database Integrity Error", "message": str(e)} for _ in ops])
+        results.extend([{"error": "Database Integrity Error", "message": str(e)} for _ in bulk_ops[-1][0]])
     except SQLAlchemyError as e:
         logging.error(f"Database Error: {str(e)}")
-        results.extend([{"error": "Database Error", "message": str(e)} for _ in ops])
+        results.extend([{"error": "Database Error", "message": str(e)} for _ in bulk_ops[-1][0]])  # Use the last ops for error message
 
 
 def validate_user_data(data, action):

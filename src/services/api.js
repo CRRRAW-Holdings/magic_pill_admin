@@ -55,11 +55,12 @@ export const uploadCSVData = (csvData, onProgress) => {
     onUploadProgress: (progressEvent) => {
       const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
       if (onProgress) {
-        onProgress(percentCompleted);  // Invoke the callback
+        onProgress(percentCompleted);
       }
     }
   })
     .then((response) => {
+      console.log(response);
       return response.data;
     })
     .catch((error) => {

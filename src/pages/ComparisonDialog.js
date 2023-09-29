@@ -112,7 +112,7 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
   };
   return (
     <Dialog open={open} onClose={handleCancel} fullWidth maxWidth="lg">
-      <DialogTitle disableTypography>
+      <DialogTitle>
         <div style={dialogHeaderStyle}>
           <div style={{ flex: 1, textAlign: 'left', fontWeight: 'bold', fontSize: '1.25rem', color: theme.palette.text.primary }}>
             Data Changes Review
