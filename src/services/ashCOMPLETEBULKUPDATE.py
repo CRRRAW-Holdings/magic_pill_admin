@@ -3,7 +3,7 @@ import configparser
 import hashlib
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
-from sqlalchemy import create_engine, exc
+from sqlalchemy import create_engine, exc, func
 from sqlalchemy.orm import sessionmaker, scoped_session
 from flask_cors import CORS
 from models import InsuranceCompany, User, MagicPillPlan
@@ -415,7 +415,7 @@ def remove_insurance_company_from_admin(admin_id):
 def get_admin_by_email(admin_email):
     standardized_email = admin_email.lower()
     with Session() as session:
-        admin = session.query(Admin).filter_by(admin_email=standardized_email).first()
+        admin = session.query(Admin).filter(func.lower(Admin.admin_email) == standardized_email).first()
 
     if admin:
         return jsonify({
