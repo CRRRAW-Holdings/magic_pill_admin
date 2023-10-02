@@ -10,7 +10,7 @@ export const getAdminByEmail = createAsyncThunk(
   'login/getAdminByEmail',
   async (email, thunkAPI) => {
     try {
-      const response = await fetchAdminByEmail(email);
+      const response = await fetchAdminByEmail(email.toLowerCase());
       if (response.data.exists) {
         return response.data;
       } else {

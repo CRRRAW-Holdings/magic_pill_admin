@@ -138,6 +138,31 @@ const hasDifferences = (oldEmployee, newEmployee, ignoreFields = []) => {
   }
   return { differencesFound, changedFields };
 };
+// const hasDifferences = (oldEmployee, newEmployee, ignoreFields = []) => {
+//   let differencesFound = false;
+//   let changedFields = [];
+//   // Get the keys from each object, filtering out the ignored fields
+//   const oldKeys = Object.keys(oldEmployee).filter(key => !ignoreFields.includes(key));
+//   const newKeys = Object.keys(newEmployee).filter(key => !ignoreFields.includes(key));
+//   // Check for missing or extra fields
+//   const allKeys = new Set([...oldKeys, ...newKeys]);  // Combine and deduplicate keys from both objects
+
+//   for (const key of allKeys) {
+//     if (!oldKeys.includes(key)) {
+//       console.log(`Extra Field in New Employee: ${key}`);
+//       differencesFound = true;
+//     } else if (!newKeys.includes(key)) {
+//       console.log(`Missing Field in New Employee: ${key}`);
+//       differencesFound = true;
+//     } else if (oldEmployee[key] !== newEmployee[key]) {
+//       console.log(`Field: ${key}`, `Old Value: ${oldEmployee[key]}`, ` New Value: ${newEmployee[key]}`);
+//       differencesFound = true;
+//       changedFields.push(key);
+//     }
+//   }
+
+//   return { differencesFound, changedFields };
+// };
 
 const compareFileWithCurrentData = (fileContent, employees, companies, plans, companyId) => {
   let results = [];
