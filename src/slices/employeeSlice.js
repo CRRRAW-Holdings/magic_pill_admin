@@ -102,7 +102,7 @@ const employeeSlice = createSlice({
     },
     processedCsvData: [],
     isComparisonDialogOpen: false,
-    companyName: null,
+    companyName: '',
     employees: [],
     isLoading: false,
     selectedEmployee: null,
@@ -146,14 +146,17 @@ const employeeSlice = createSlice({
       .addCase(fetchEmployees.pending, (state) => {
         state.hasError = false;
         state.errorMessage = '';
+        state.isLoading= true;
       })
       .addCase(fetchEmployees.fulfilled, (state, action) => {
         state.companyName = action.payload.companyName;
         state.employees = action.payload.users;
+        state.isLoading= false;
       })
       .addCase(fetchEmployees.rejected, (state, action) => {
         state.hasError = true;
         state.errorMessage = action.payload || 'There was an issue loading the employees. Please try again later.';
+        state.isLoading = false;
       })
 
       // addEmployeeThunk

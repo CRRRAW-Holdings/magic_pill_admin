@@ -89,7 +89,10 @@ export const LogoutButton = styled(Button)(({ theme }) => ({
     backgroundColor: theme.palette.rusticRedwood.main,
   },
   textAlign: 'justify',
-  marginLeft: '20px'
+  marginLeft: '20px',
+  position: 'absolute',  // Positions the button based on the closest relative/absolute/fixed parent (Wrapper in this case)
+  top: '30px', 
+  right: '30px',
 }));
 
 // 4. Form Elements

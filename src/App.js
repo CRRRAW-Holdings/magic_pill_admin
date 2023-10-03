@@ -22,10 +22,10 @@ function App() {
             <Router>
               <Routes>
                 <Route path='/' element={<Landing />} />
-                <Route path="/company" element={<PrivateRoute path="/company" element={<Company />} />} />
-                <Route path='/company/:id' element={<Employee />} />
+                <Route path='/company' element={<PrivateRoute path='/company' element={<Company />} />} />
+                <Route path='/company/:id' element={<PrivateRoute path='/company/:id' element={<Employee />} />} />
                 <Route path='/signin-with-email' element={<EmailSignInPage />} />
-                <Route path='*' element={<NotFound />} />
+                <Route path='*' element={<PrivateRoute path='*' element={<NotFound />} />} />
               </Routes>
             </Router>
           </AuthProvider>
@@ -37,4 +37,3 @@ function App() {
 }
 
 export default App;
-
