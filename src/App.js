@@ -9,6 +9,8 @@ import NotFound from './pages/NotFound';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import EmailSignInPage from './pages/EmailSignInPage';
+import { AuthProvider } from './utils/AuthProvider';
+import PrivateRoute from './routes/PrivateRoute';
 
 function App() {
   return (
@@ -16,15 +18,17 @@ function App() {
       <CssBaseline />
       <div className='App'>
         <header className='App-header'>
-          <Router>
-            <Routes>
-              <Route path='/' element={<Landing />} />
-              <Route path='/company' element={<Company />} />
-              <Route path='/company/:id' element={<Employee />} />
-              <Route path='/signin-with-email' element={<EmailSignInPage />} />  {/* New route */}
-              <Route path='*' element={<NotFound />} />
-            </Routes>
-          </Router>
+          <AuthProvider>
+            <Router>
+              <Routes>
+                <Route path='/' element={<Landing />} />
+                <Route path="/company" element={<PrivateRoute path="/company" element={<Company />} />} />
+                <Route path='/company/:id' element={<Employee />} />
+                <Route path='/signin-with-email' element={<EmailSignInPage />} />
+                <Route path='*' element={<NotFound />} />
+              </Routes>
+            </Router>
+          </AuthProvider>
           <ToastContainer />
         </header>
       </div>

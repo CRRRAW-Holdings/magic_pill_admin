@@ -63,8 +63,6 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
   };
 
   const handleSubmit = () => {
-    console.log(employeeData, 'employeeData');
-    console.log(primaryUser);
     const formattedDOB = employeeData.dob;
 
     const email = employeeData.is_dependent ? primaryUser.email : employeeData.email;
@@ -149,7 +147,6 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
             value={primaryUser}
             onChange={(event, newValue) => {
               setPrimaryUser(newValue);
-              console.log(event, newValue);
             }}
           />
         )}

@@ -4,7 +4,9 @@ import { createSelector } from 'reselect';
 
 
 //AUTH/USER
-export const selectAdminData = state => state.auth.admin;
+export const selectAdminData = state => state.auth.currentAdmin;
+
+export const selectAuthIsLoading = state => state.auth.loading;
 
 //COMPANY
 export const selectCompanies = state => state.company.companies;
@@ -15,8 +17,6 @@ export const selectHasError = state => state.company.hasError;
 
 export const selectErrorMessage = state => state.company.errorMessage;
 
-// Example of creating a memoized selector using reselect
-// Assuming adminData and companies are frequently accessed together
 export const selectFilteredCompanies = createSelector(
   [selectAdminData, selectCompanies, selectSearchTerm],
   (adminData, companies, searchTerm) => {

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Wrapper,
@@ -13,34 +13,33 @@ import {
 } from '../styles/companyComponents';
 import { useDispatch, useSelector } from 'react-redux';
 import { setSearchTerm, fetchCompanies } from '../slices/companySlice';
-import { getAdminByEmail } from '../slices/authSlice';
 import {
   selectSearchTerm,
   selectHasError,
   selectErrorMessage,
-  selectFilteredCompanies
+  selectFilteredCompanies,
 } from '../selectors';
 import { CardContent } from '@mui/material';
+import { AuthContext } from '../utils/AuthProvider';
+import { LogoutButton } from '../styles/buttonComponents';
+
+
 
 const Company = () => {
   const dispatch = useDispatch();
-  
+  const { currentAdmin, signOut } = useContext(AuthContext);
+
+
   const searchTerm = useSelector(selectSearchTerm);
   const hasError = useSelector(selectHasError);
   const errorMessage = useSelector(selectErrorMessage);
 
   useEffect(() => {
     dispatch(fetchCompanies());
-  
-    // Fetch admin data
-    const email = window.localStorage.getItem('emailForSignIn');
-    if (email) {
-      dispatch(getAdminByEmail(email));
-    }
+    console.log(currentAdmin, 'COMPANY PAGE USEEFFECT ADMIN');
+
   }, [dispatch]);  
   
-
-
   const filteredCompanies = useSelector(selectFilteredCompanies);
 
   return (
@@ -49,6 +48,9 @@ const Company = () => {
         <Title variant="h4" component="h1" gutterBottom>
           Select Company
         </Title>
+        <LogoutButton variant="contained" color="secondary" onClick={signOut}>
+          Logout
+        </LogoutButton>
         <SearchBar
           type="text"
           placeholder="Search for a company..."

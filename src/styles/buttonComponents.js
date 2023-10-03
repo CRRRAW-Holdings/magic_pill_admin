@@ -81,6 +81,17 @@ export const BulkEditButton = styled(Button)(({ theme }) => ({
   },
 }));
 
+export const LogoutButton = styled(Button)(({ theme }) => ({
+  ...commonButtonStyles,  // spread the common styles
+  color: theme.palette.common.white,
+  backgroundColor: theme.palette.rusticRedwood.light,
+  '&:hover': {
+    backgroundColor: theme.palette.rusticRedwood.main,
+  },
+  textAlign: 'justify',
+  marginLeft: '20px'
+}));
+
 // 4. Form Elements
 export const StyledCheckbox = styled(Checkbox)(({ theme }) => ({
   margin: '0 10px',

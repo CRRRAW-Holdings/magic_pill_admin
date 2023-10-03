@@ -1,22 +1,24 @@
-// EmailSignInPage.js
-import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useEffect, useContext } from 'react';
+import { AuthContext } from '../utils/AuthProvider'; // Adjust the path if needed
 import { useNavigate } from 'react-router-dom';
-import { signInWithEmailLinkAction } from '../slices/authSlice';
 
 const EmailSignInPage = () => {
-  const dispatch = useDispatch();
+  const { signInWithEmailLink } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
     const signIn = async () => {
-      const resultAction = await dispatch(signInWithEmailLinkAction());
-      if (resultAction.meta.requestStatus === 'fulfilled') {
+      try {
+        const email = window.localStorage.getItem('emailForSignIn');
+        const emailLink = window.location.href;
+        await signInWithEmailLink(email, emailLink);
         navigate('/company');
+      } catch (error) {
+        console.error('Error signing in:', error.message);
       }
     };
     signIn();
-  }, [dispatch, navigate]);
+  }, [signInWithEmailLink, navigate]);
 
   return (
     <div>

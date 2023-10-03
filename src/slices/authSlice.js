@@ -10,8 +10,12 @@ export const getAdminByEmail = createAsyncThunk(
   'login/getAdminByEmail',
   async (email, thunkAPI) => {
     try {
+      
       const response = await fetchAdminByEmail(email.toLowerCase());
       if (response.data.exists) {
+        await thunkAPI.dispatch(sendSignInLinkToEmailAction(email));
+        console.log(response.data, 'GETADMIN AND SETADMIN LOCAL');
+        window.localStorage.setItem('admin', JSON.stringify(response.data));
         return response.data;
       } else {
         return thunkAPI.rejectWithValue('This admin email is not registered in our systerm');
@@ -31,44 +35,43 @@ export const sendSignInLinkToEmailAction = createAsyncThunk(
         handleCodeInApp: true,
       };
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      console.log(email, 'SENDEMAIL AND SETEMAIL LOCAL');
       window.localStorage.setItem('emailForSignIn', email);
+      return email;
     } catch (error) {
       console.log('sendSignInLinkToEmail', error);
       return rejectWithValue(error.message);
     }
   }
 );
-
 export const signInWithEmailLinkAction = createAsyncThunk(
   'auth/signInWithEmailLink',
-  async (_, { rejectWithValue }) => {
-    const url = new URL(window.location.href);
-    const params = new URLSearchParams(url.search);
-    // const apiKey = params.get('apiKey');
-    // const oobCode = params.get('oobCode');
-    // const mode = params.get('mode');
-    // ... (other parameters you need)
-    console.log('hehere');
+  async ({ email, emailLink }, { rejectWithValue }) => {
     try {
-      const email = window.localStorage.getItem('emailForSignIn');
-      const emailLink = window.location.href;
-
       if (!email || !isSignInWithEmailLink(auth, emailLink)) {
         throw new Error('Invalid email sign-in link.');
       }
-
-      params.delete('apiKey');
-      params.delete('oobCode');
-      params.delete('mode');
-      params.delete('lang');
-
-      const cleanUrl = `${url.origin}${url.pathname}?${params.toString()}`;
-      window.history.replaceState(null, '', cleanUrl);
       const result = await signInWithEmailLink(auth, email, emailLink);
-      console.log(result);
-      return result.admin;
+      let admin = {};
+      try {
+        console.log(admin, 'signInWITHEMAIL AND GET LOCAL ADMIN');
+        admin = JSON.parse(window.localStorage.getItem('admin')) || {};
+      } catch (error) {
+        console.warn('Failed to parse admin data from local storage.', error);
+      }
+      const essentialUserData = {
+        uid: result.user.uid,
+        email: result.user.email,
+        emailVerified: result.user.emailVerified,
+        providerData: result.user.providerData,
+        accessToken: result.user.accessToken,
+        ...admin
+      };
+      console.log(essentialUserData, 'COMBINE AND SETLOCAL ADMIN');
+      window.localStorage.setItem('admin', JSON.stringify(essentialUserData));
+      return essentialUserData;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return rejectWithValue(error.message);
     }
   }
@@ -86,7 +89,7 @@ export const signOutAction = createAsyncThunk(
 );
 
 const initialState = {
-  admin: null,
+  currentAdmin: null,
   loading: false,
   error: null,
 };
@@ -100,25 +103,37 @@ const authSlice = createSlice({
       state.error = null;
     },
     authSuccess: (state, action) => {
-      state.admin = action.payload;
+      state.currentAdmin = action.payload;
       state.loading = false;
     },
     authError: (state, action) => {
       state.error = action.payload;
       state.loading = false;
     },
+    setAuthState: (state, action) => {
+      state.currentAdmin = action.payload ? { ...action.payload } : null;
+    },
+    
     logoutSuccess: (state) => {
-      state.admin = null;
+      state.currentAdmin = null;
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(getAdminByEmail.fulfilled, (state, action) => {
-        state.admin = action.payload;
+        state.currentAdmin = {
+          ...state.currentAdmin,
+          ...action.payload
+        };
         state.loading = false;
       })
+      .addCase(getAdminByEmail.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(getAdminByEmail.rejected, (state, action) => {
-        state.error = true;
+        state.currentAdmin = null;
+        state.error = 'Admin is not in system, contact system support';
         state.loading = false;
       })
       .addCase(sendSignInLinkToEmailAction.pending, (state) => {
@@ -127,6 +142,7 @@ const authSlice = createSlice({
       })
       .addCase(sendSignInLinkToEmailAction.fulfilled, (state) => {
         state.loading = false;
+        //state.currentAdmin.email = action.payload;
       })
       .addCase(sendSignInLinkToEmailAction.rejected, (state, action) => {
         state.error = action.payload;
@@ -137,7 +153,10 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(signInWithEmailLinkAction.fulfilled, (state, action) => {
-        state.admin = action.payload;
+        state.currentAdmin = {
+          ...state.currentAdmin,
+          ...action.payload
+        };
         state.loading = false;
       })
       .addCase(signInWithEmailLinkAction.rejected, (state, action) => {
@@ -149,7 +168,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(signOutAction.fulfilled, (state) => {
-        state.admin = null;
+        state.currentAdmin = null;
         state.loading = false;
       })
       .addCase(signOutAction.rejected, (state, action) => {
@@ -159,5 +178,5 @@ const authSlice = createSlice({
   }
 });
 
-export const { authStart, authSuccess, authError, logoutSuccess } = authSlice.actions;
+export const { authStart, authSuccess, authError, logoutSuccess, setAuthState } = authSlice.actions;
 export default authSlice.reducer;
