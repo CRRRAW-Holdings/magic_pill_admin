@@ -21,7 +21,8 @@ const isFileValid = (file) => {
 };
 
 const parseCSV = (content) => {
-  const result = Papa.parse(content, {
+  const trimmedContent = content.trim();
+  const result = Papa.parse(trimmedContent, {
     header: true,
     dynamicTyping: true,
     skipEmptyLines: true,
@@ -75,7 +76,9 @@ const readFileContent = (file, onSuccess, onError) => {
 };
 
 const validateData = (parsedData) => {
+  console.log(parsedData);
   for (const record of parsedData) {
+    console.log(record);
     if (!record.email || !record.dob /* ... other validations */) {
       throw new ProcessingError('Invalid data: missing required fields.', 'VALIDATION_ERROR');
     }
