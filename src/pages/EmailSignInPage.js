@@ -1,9 +1,9 @@
 import React, { useEffect, useContext } from 'react';
-import { AuthContext } from '../utils/AuthProvider'; // Adjust the path if needed
+import { AuthContext } from '../utils/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 
 const EmailSignInPage = () => {
-  const { signInWithEmailLink } = useContext(AuthContext);
+  const { signInWithEmail } = useContext(AuthContext); 
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -11,14 +11,21 @@ const EmailSignInPage = () => {
       try {
         const email = window.localStorage.getItem('emailForSignIn');
         const emailLink = window.location.href;
-        await signInWithEmailLink(email, emailLink);
+
+        if (!email || !emailLink) {
+          throw new Error('Email or email link is missing');
+        }
+
+        await signInWithEmail(email, emailLink);
         navigate('/company');
       } catch (error) {
         console.error('Error signing in:', error.message);
+        // Handle error (e.g., navigate to an error page or display a message)
       }
     };
+
     signIn();
-  }, [signInWithEmailLink, navigate]);
+  }, [signInWithEmail, navigate]); // Make sure the dependencies are correct
 
   return (
     <div>

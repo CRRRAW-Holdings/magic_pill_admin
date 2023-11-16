@@ -8,3 +8,9 @@ export const formatDateToYYYYMMDD = (dateString) => {
 
   return `${year}-${month}-${day}`;
 };
+
+
+export const formatPhoneNumber = (phoneNumber) => {
+
+  
+};

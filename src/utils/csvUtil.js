@@ -88,7 +88,7 @@ const validateData = (parsedData) => {
 
 const transformEmployee = (employee, companies, plans) => {
   try {
-    const { email, dob, first_name, insurance_company_id, plan_name, is_active, address, last_name, phone, is_dependent } = employee;
+    const { email, dob, firstName, companyId, planName, isActive, address, lastName, phone, isDependant } = employee;
     const formattedDOB = formatDateToYYYYMMDD(dob);
 
     const formattedPhone = typeof phone === 'number'
@@ -99,16 +99,16 @@ const transformEmployee = (employee, companies, plans) => {
     return {
       email: email,
       dob: formattedDOB,
-      username: `${email}_${formattedDOB}_${insurance_company_id}_${first_name}`,
-      insurance_company_id: insurance_company_id,
-      magic_pill_plan_id: getPlanIdFromName(plan_name, plans),
-      is_active: is_active,
+      username: `${email}_${formattedDOB}_${companyId}_${firstName}`,
+      companyId: companyId,
+      planId: getPlanIdFromName(planName, plans),
+      isActive: isActive,
       address: address,
-      company: getCompanyNameFromInsuranceId(insurance_company_id, companies),
-      first_name: first_name,
-      last_name: last_name,
+      company: getCompanyNameFromInsuranceId(companyId, companies),
+      firstName: firstName,
+      lastName: lastName,
       phone: formattedPhone,
-      is_dependent: is_dependent,
+      isDependant: isDependant,
     };
   } catch (error) {
     throw new ProcessingError('Error transforming employee data: ' + error.message, 'TRANSFORM_ERROR');
@@ -118,15 +118,15 @@ const transformEmployee = (employee, companies, plans) => {
 const required_fields = [
   'username',
   'email',
-  'first_name',
-  'insurance_company_id',
-  'magic_pill_plan_id',
-  'last_name',
+  'firstName',
+  'companyId',
+  'planId',
+  'lastName',
   'phone',
   'address',
   'dob',
-  'is_active',
-  'is_dependent'
+  'isActive',
+  'isDependant'
 ];
 
 const hasDifferences = (oldEmployee, newEmployee, ignoreFields = []) => {
@@ -176,21 +176,21 @@ const compareFileWithCurrentData = (fileContent, employees, companies, plans, co
 
     const matchedEmployees = employees.filter(emp =>
       emp.email === transformedEmployeeFromFile.email &&
-      emp.insurance_company_id === transformedEmployeeFromFile.insurance_company_id &&
-      (emp.dob === transformedEmployeeFromFile.dob || emp.first_name === transformedEmployeeFromFile.first_name)
+      emp.companyId === transformedEmployeeFromFile.companyId &&
+      (emp.dob === transformedEmployeeFromFile.dob || emp.firstName === transformedEmployeeFromFile.firstName)
     );
     console.log('***' + transformedEmployeeFromFile.username);
     if (matchedEmployees.length === 1) {
       const matchedEmployee = matchedEmployees[0];
-      const isActiveChanged = matchedEmployee.is_active !== transformedEmployeeFromFile.is_active;
-      const diffResult = hasDifferences(matchedEmployee, transformedEmployeeFromFile, ['is_active']);
+      const isActiveChanged = matchedEmployee.isActive !== transformedEmployeeFromFile.isActive;
+      const diffResult = hasDifferences(matchedEmployee, transformedEmployeeFromFile, ['isActive']);
 
-      if (matchedEmployee.is_active && isActiveChanged && !diffResult.differencesFound) {
+      if (matchedEmployee.isActive && isActiveChanged && !diffResult.differencesFound) {
         results.push({
           action: 'toggle',
           user_data: {
             ...transformedEmployeeFromFile,
-            user_id: matchedEmployee.user_id
+            documentId: matchedEmployee.documentId
           }
         });
       } else if (diffResult.differencesFound) {
@@ -198,7 +198,7 @@ const compareFileWithCurrentData = (fileContent, employees, companies, plans, co
           action: 'update',
           user_data: {
             ...transformedEmployeeFromFile,
-            user_id: matchedEmployee.user_id,
+            documentId: matchedEmployee.documentId,
           },
           changedFields: diffResult.changedFields
         });

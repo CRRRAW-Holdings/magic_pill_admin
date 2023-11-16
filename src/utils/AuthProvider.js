@@ -1,81 +1,106 @@
 import PropTypes from 'prop-types';
-import { useDispatch, useSelector } from 'react-redux';
 import React, { createContext, useEffect, useState } from 'react';
 import { firebaseAuth } from '../services/authfirebase';
-import { selectAdminData } from '../selectors';
-import { logoutSuccess, setAuthState, signInWithEmailLinkAction, signOutAction, } from '../slices/authSlice';
+import {
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+  signOut as firebaseSignOut
+} from 'firebase/auth';
+import { fetchAdminByEmail } from '../services/api';
 
 const auth = firebaseAuth;
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const dispatch = useDispatch();
-  const currentAdmin = useSelector(selectAdminData);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentAdmin, setCurrentAdmin] = useState(null); // Add this state
+  const [loading, setLoading] = useState(true);
   const [initializationCompleted, setInitializationCompleted] = useState(false);
 
 
-  const signInWithEmailLink = (email, emailLink) => {
-    dispatch(signInWithEmailLinkAction({ email, emailLink }));
+  const checkAdminByEmail = async (email) => {
+    try {
+      const response = await fetchAdminByEmail(email.toLowerCase());
+      if (response.email) {
+        await sendSignInLink(email);
+        return response;
+      } else {
+        throw new Error('This admin email is not registered in our system');
+      }
+    } catch (error) {
+      console.error(error.message);
+      // Handle error (e.g., show notification)
+    }
   };
 
-  const signOut = () => {
-    dispatch(signOutAction());
-    window.localStorage.removeItem('admin');
-    window.localStorage.removeItem('email');
-    console.log('SIGNOUT', window.localStorage, currentAdmin);
+  const sendSignInLink = async (email) => {
+    try {
+      const actionCodeSettings = {
+        // url: `${process.env.REACT_APP_BASE_URL}/signin-with-email`,
+        url: 'http://localhost:3000/signin-with-email',
+        handleCodeInApp: true,
+      };
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem('emailForSignIn', email);
+    } catch (error) {
+      console.error(error.message);
+      // Handle error
+    }
+  };
+
+  const signInWithEmail = async (email, emailLink) => {
+    setLoading(true);
+    try {  
+      if (!email || !isSignInWithEmailLink(auth, emailLink)) {
+        throw new Error('Invalid email sign-in link.');
+      }
+      const result = await signInWithEmailLink(auth, email, emailLink);
+      setCurrentUser(result.user);
+      const adminDetails = await fetchAdminByEmail(email); // Fetch admin details
+      setCurrentAdmin(adminDetails); // Set admin details
+    } catch (error) {
+      console.error(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
   
+  // Function to sign out
+  const signOut = async () => {
+    setLoading(true);
+    try {
+      await firebaseSignOut(auth);
+      setCurrentUser(null);
+    } catch (error) {
+      console.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      const storedAdmin = JSON.parse(window.localStorage.getItem('admin'));
-      
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      setCurrentUser(user);
       if (user) {
-        console.log('LOGIN OR YES USER');
-  
-        const userData = {
-          ...storedAdmin,
-          uid: user.uid,
-          email: user.email,
-          emailVerified: user.emailVerified,
-          providerData: user.providerData,
-          accessToken: user.accessToken
-        };
-  
-        dispatch(setAuthState(userData));
-    
-        const prevStoredAdmin = JSON.parse(window.localStorage.getItem('admin'));
-        if (JSON.stringify(prevStoredAdmin) !== JSON.stringify(userData)) {
-          console.log('SET LOCAL ADMIN COMBINATION');
-          window.localStorage.setItem('admin', JSON.stringify(userData));
-          console.log(window.localStorage);
-        }
-      } else if (storedAdmin) {
-        console.log('NO FIREBASE USER, BUT LOCALSTORE ADMIN EXISTS');
-        // Handle the scenario where there's no Firebase user, but there's data in localStorage.
-        // E.g., you can dispatch a different action or set a state that will prompt the user to re-login.
+        const adminDetails = await fetchAdminByEmail(user.email);
+        setCurrentAdmin(adminDetails);
       } else {
-        console.log('LOGOUT OR NO USER');
-        dispatch(logoutSuccess());
-        window.localStorage.removeItem('admin');
-        window.localStorage.removeItem('email');
+        setCurrentAdmin(null);
       }
+      setLoading(false);
       setInitializationCompleted(true);
     });
-    
     return () => unsubscribe();
-  }, [dispatch]);
-  
-  
-  
-  
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ currentAdmin, signInWithEmailLink, signOut, initializationCompleted }}>
+    <AuthContext.Provider value={{ currentUser, currentAdmin, loading, initializationCompleted, checkAdminByEmail, signInWithEmail, signOut }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-
 AuthProvider.propTypes = {
-  children: PropTypes.node.isRequired
+  children: PropTypes.node.isRequired,
 };

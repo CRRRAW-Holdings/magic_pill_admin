@@ -74,7 +74,7 @@ def bulk_user_operations():
     user_update_mappings = []
     user_toggle_mappings = []
 
-    company_id = data[0]["user_data"]["insurance_company_id"] if data else None
+    company_id = data[0]["user_data"]["companyId"] if data else None
 
     for operation in data:
         action = operation.get("action")
@@ -105,26 +105,26 @@ def handle_update_action(operation, results, user_update_mappings):
     if "error" in validation_result:
         results.append(validation_result)
     else:
-        user_id = operation["user_data"].get("user_id")  # Moved inside user_data
+        documentId = operation["user_data"].get("documentId")  # Moved inside user_data
         with Session() as session:
-            user = session.query(User).filter_by(user_id=user_id).first()
+            user = session.query(User).filter_by(documentId=documentId).first()
             if user:
                 user_update_mappings.append(operation["user_data"])
             else:
-                results.append({"error": "User Not Found", "message": f"User with ID {user_id} not found."})
+                results.append({"error": "User Not Found", "message": f"User with ID {documentId} not found."})
 
 def handle_toggle_action(operation, results, user_toggle_mappings):
     validation_result = validate_user_data(operation["user_data"], "toggle")
     if "error" in validation_result:
         results.append(validation_result)
     else:
-        user_id = operation["user_data"].get("user_id")  # Moved inside user_data
+        documentId = operation["user_data"].get("documentId")  # Moved inside user_data
         with Session() as session:
-            user = session.query(User).filter_by(user_id=user_id).first()
+            user = session.query(User).filter_by(documentId=documentId).first()
             if user:
-                user_toggle_mappings.append({"user_id": user_id, "is_active": not user.is_active})
+                user_toggle_mappings.append({"documentId": documentId, "isActive": not user.isActive})
             else:
-                results.append({"error": "User Not Found", "message": f"User with ID {user_id} not found."})
+                results.append({"error": "User Not Found", "message": f"User with ID {documentId} not found."})
 
 def perform_bulk_operations(model, results, inserts, updates, toggles, company_id):
     bulk_ops = [
@@ -139,7 +139,7 @@ def perform_bulk_operations(model, results, inserts, updates, toggles, company_i
                     method(model, ops)
                     results.extend([{"success": True, "message": f"User {message} successfully"} for _ in ops])
                     session.commit()
-            users = session.query(User).filter(User.insurance_company_id == company_id).all()
+            users = session.query(User).filter(User.companyId == company_id).all()
         return [user.serialize() for user in users]
     except IntegrityError as e:
         logging.error(f"Database Integrity Error: {str(e)}")
@@ -150,21 +150,21 @@ def perform_bulk_operations(model, results, inserts, updates, toggles, company_i
 
 
 def validate_user_data(data, action):
-    if action in ["update", "toggle"] and "user_id" not in data:
-        return {"error": "Bad Request", "message": "'user_id' is required for update and toggle operations."}
+    if action in ["update", "toggle"] and "documentId" not in data:
+        return {"error": "Bad Request", "message": "'documentId' is required for update and toggle operations."}
 
     required_fields = {
         "username": str,
         "email": str,
-        "first_name": str,
-        "last_name": str,
+        "firstName": str,
+        "lastName": str,
         "phone": str,
         "address": str,
         "dob": str,
-        "insurance_company_id": int,
-        "magic_pill_plan_id": int,
-        "is_active": bool,
-        "is_dependent": bool
+        "companyId": int,
+        "planId": int,
+        "isActive": bool,
+        "isDependant": bool
     }
     
     for field, expected_type in required_fields.items():
@@ -175,8 +175,8 @@ def validate_user_data(data, action):
             return {"error": "Bad Request", "message": f"'{field}' should be of type {expected_type.__name__}."}
 
     with Session() as session:
-        insurance_company = session.get(InsuranceCompany, data["insurance_company_id"])
-        magic_pill_plan = session.get(MagicPillPlan, data["magic_pill_plan_id"])
+        insurance_company = session.get(InsuranceCompany, data["companyId"])
+        magic_pill_plan = session.get(MagicPillPlan, data["planId"])
 
         if not magic_pill_plan:
             return {"error": "Not Found", "message": "Provided Magic Pill Plan ID not found."}
@@ -196,7 +196,7 @@ def company(company_id):
     insurance_company = Session.query(InsuranceCompany).get(company_id)
     if not insurance_company:
         return jsonify(results=[{"error": "Not Found", "message": "Company not found."}]), 404
-    users = Session.query(User).filter_by(insurance_company_id=company_id).all()
+    users = Session.query(User).filter_by(companyId=company_id).all()
     return jsonify(results=[
         {
             "company": insurance_company.serialize(),
@@ -213,16 +213,16 @@ def add_user():
     if not data:
         return jsonify(results=[{"error": "Bad Request", "message": "No data provided."}]), 400
 
-    required_fields = [ "username", "email", "insurance_company_id", "magic_pill_plan_id", "is_active", 
-        "address", "dob", "first_name", "last_name", "phone", "is_dependent"]
+    required_fields = [ "username", "email", "companyId", "planId", "isActive", 
+        "address", "dob", "firstName", "lastName", "phone", "isDependant"]
 
     for field in required_fields:
         if field not in data:
             return jsonify(results=[{"error": "Bad Request", "message": f"'{field}' is required."}]), 400
 
     # Check for the existence of the referenced insurance company and magic pill plan
-    insurance_company = Session.query(InsuranceCompany).get(data["insurance_company_id"])
-    magic_pill_plan = Session.query(MagicPillPlan).get(data["magic_pill_plan_id"])
+    insurance_company = Session.query(InsuranceCompany).get(data["companyId"])
+    magic_pill_plan = Session.query(MagicPillPlan).get(data["planId"])
 
     if not insurance_company or not magic_pill_plan:
         return jsonify(results=[{"error": "Not Found", "message": "Insurance company or Magic Pill Plan not found."}]), 404
@@ -231,15 +231,15 @@ def add_user():
     new_user = User(
         username=data["username"],
         email=data["email"],
-        insurance_company_id=data["insurance_company_id"],
-        magic_pill_plan_id=data["magic_pill_plan_id"],
-        is_active=data["is_active"],
+        companyId=data["companyId"],
+        planId=data["planId"],
+        isActive=data["isActive"],
         dob=data.get("dob"),
         company=data.get("company"),
-        first_name=data.get("first_name"),
-        last_name=data.get("last_name"),
+        firstName=data.get("firstName"),
+        lastName=data.get("lastName"),
         phone=data.get("phone"),
-	    is_dependent=data["is_dependent"], #change to is_dependant later potentially
+	    isDependant=data["isDependant"], #change to is_dependant later potentially
         address=data.get("address")
     )
 
@@ -260,27 +260,27 @@ def add_user():
         return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
 
 
-@app.route("/user/update/<user_id>", methods=["POST"])
-def update_user(user_id):
+@app.route("/user/update/<documentId>", methods=["POST"])
+def update_user(documentId):
     data = request.get_json()
 
     with Session() as session:
-        user = session.query(User).get(user_id)
+        user = session.query(User).get(documentId)
         if not user:
             return jsonify(results=[{"error": "Not Found", "message": "User not found."}]), 404
 
         user.username = data.get("username")
         user.email = data.get("email")
-        user.insurance_company_id = data.get("insurance_company_id")
-        user.magic_pill_plan_id = data.get("magic_pill_plan_id")
-        user.is_active = data.get("is_active")
+        user.companyId = data.get("companyId")
+        user.planId = data.get("planId")
+        user.isActive = data.get("isActive")
         user.address = data.get("address")
         user.dob = data.get("dob")
         user.company = data.get("company")
-        user.first_name = data.get("first_name")
-        user.last_name = data.get("last_name")
+        user.firstName = data.get("firstName")
+        user.lastName = data.get("lastName")
         user.phone = data.get("phone")
-        user.is_dependent =data.get("is_dependent")
+        user.isDependant =data.get("isDependant")
 
         try:
             session.commit()
@@ -289,24 +289,24 @@ def update_user(user_id):
             session.rollback()
             return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
 
-@app.route("/user/toggle/<user_id>", methods=["POST"])
-def toggle_user(user_id):
+@app.route("/user/toggle/<documentId>", methods=["POST"])
+def toggle_user(documentId):
     with Session() as session:
-        user = session.query(User).get(user_id)
+        user = session.query(User).get(documentId)
         if not user:
             return jsonify(results=[{"error": "Not Found", "message": "User not found."}]), 404
-        user.is_active = not user.is_active
+        user.isActive = not user.isActive
         try:
             session.commit()
-            return jsonify(results=[{"success": True, "message": "User status toggled successfully", "is_active": user.is_active}])
+            return jsonify(results=[{"success": True, "message": "User status toggled successfully", "isActive": user.isActive}])
         except exc.SQLAlchemyError as e:
             session.rollback()
             return jsonify(results=[{"error": "Database Error", "message": str(e)}]), 500
 
     
-@app.route("/user/<user_id>", methods=["GET"])
-def get_user(user_id):
-    user = Session.query(User).get(user_id)
+@app.route("/user/<documentId>", methods=["GET"])
+def get_user(documentId):
+    user = Session.query(User).get(documentId)
     if not user:
         return jsonify(results=[{"error": "Not Found", "message": "User not found."}]), 404
     return jsonify(results=[user.serialize_full()])  # Serialize with all attributes
@@ -331,7 +331,7 @@ def create_admin():
     new_admin = Admin(
         admin_username=data.get('admin_username'),
         admin_email=data.get('admin_email'),
-        insurance_company_id=data.get('insurance_company_id')
+        companyId=data.get('companyId')
     )
     session.add(new_admin)
     session.commit()
@@ -345,7 +345,7 @@ def update_admin(admin_id):
     data = request.json
     admin.admin_username = data.get('admin_username', admin.admin_username)
     admin.admin_email = data.get('admin_email', admin.admin_email)
-    admin.insurance_company_id = data.get('insurance_company_id', admin.insurance_company_id)
+    admin.companyId = data.get('companyId', admin.companyId)
     session.commit()
     return jsonify(admin.serialize())
 
@@ -423,7 +423,7 @@ def get_admin_by_email(admin_email):
             "admin_id": admin.admin_id,
             "email": admin.admin_email,
             "username": admin.admin_username,
-            "company_id": admin.insurance_company_id
+            "company_id": admin.companyId
         })
     else:
         return jsonify({"exists": False})

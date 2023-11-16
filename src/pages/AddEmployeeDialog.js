@@ -23,16 +23,15 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
   const dispatch = useDispatch();
   const [employeeData, setEmployeeData] = useState({
     email: '',
-    insurance_company_id: companyId,
-    magic_pill_plan_id: '',
-    is_active: true,
-    is_dependent: false,
+    companyId: companyId,
+    planId: '',
+    isActive: true,
+    isDependant: false,
     address: '',
     dob: '',
-    first_name: '',
-    last_name: '',
+    firstName: '',
+    lastName: '',
     phone: '',
-
   });
 
   // eslint-disable-next-line no-unused-vars
@@ -63,44 +62,37 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
   };
 
   const handleSubmit = () => {
-    const formattedDOB = employeeData.dob;
-
-    const email = employeeData.is_dependent ? primaryUser.email : employeeData.email;
-    console.log(email);
-    const username = `${email}_${formattedDOB}_${companyId}`;
+    const email = employeeData.isDependant ? primaryUser.email : employeeData.email;
     const addedEmployeeData = {
       address: employeeData.address,
-      insurance_company_id: parseInt(companyId, 10),
-      magic_pill_plan_id: employeeData.magic_pill_plan_id,
-      age: employeeData.age,
+      companyId: parseInt(companyId, 10),
+      planId: parseInt(employeeData.planId, 10),
       company: getCompanyNameFromInsuranceId(parseInt(companyId, 10), companies),
-      dob: formattedDOB,
+      dob: employeeData.dob,
       email: email,
-      first_name: employeeData.first_name,
-      is_active: employeeData.is_active,
-      is_dependent: employeeData.is_dependent,
-      last_name: employeeData.last_name,
+      firstName: employeeData.firstName,
+      isActive: employeeData.isActive,
+      isDependant: employeeData.isDependant,
+      lastName: employeeData.lastName,
       phone: employeeData.phone,
-      username: username,
     };
 
-    dispatch(addEmployeeThunk({ companyId, employeeData: addedEmployeeData }))
+    dispatch(addEmployeeThunk({employeeData: addedEmployeeData }))
       .then(action => {
         if (addEmployeeThunk.fulfilled.match(action)) {
           setEmployeeData({
             email: '',
-            insurance_company_id: '',
-            magic_pill_plan_id: '',
-            is_active: true,
-            is_dependent: false,
+            companyId: '',
+            planId: '',
+            isActive: true,
+            isDependant: false,
             address: '',
             dob: '',
-            first_name: '',
-            last_name: '',
+            firstName: '',
+            lastName: '',
             phone: '',
-            username: ''
           });
-          toast.success(`${action.payload?.first_name} ${action.payload?.last_name} was added successfully!`);
+          toast.success(`${action.payload?.firstName} ${action.payload?.lastName} was added successfully!`);
           onClose();
         } else if (addEmployeeThunk.rejected.match(action)) {
           toast.error('Error adding employee!', action.error);
@@ -117,9 +109,9 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
         <FormControlLabel
           control={
             <Checkbox
-              checked={employeeData.is_active}
+              checked={employeeData.isActive}
               onChange={handleCheckboxChange}
-              name="is_active"
+              name="isActive"
               color="primary"
             />
           }
@@ -128,15 +120,15 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
         <FormControlLabel
           control={
             <Checkbox
-              checked={employeeData.is_dependent}
+              checked={employeeData.isDependant}
               onChange={handleCheckboxChange}
-              name="is_dependent"
+              name="isDependant"
               color="primary"
             />
           }
           label="Is Dependent"
         />
-        {employeeData.is_dependent && (
+        {employeeData.isDependant && (
           <Autocomplete
             options={employees}
             getOptionLabel={(option) => option.email}
@@ -150,7 +142,7 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
             }}
           />
         )}
-        {!employeeData.is_dependent && (
+        {!employeeData.isDependant && (
           <TextField
             margin="dense"
             name="email"
@@ -169,7 +161,7 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
           onChange={handleChange}
           displayEmpty
           fullWidth
-          name="insurance_company_id"
+          name="companyId"
           disabled
           margin="dense"
         >
@@ -177,25 +169,25 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
             <em>Select a company</em>
           </MenuItem>
           {companies.map(company => (
-            <MenuItem key={company.insurance_company_id} value={company.insurance_company_id}>
-              {company.insurance_company_name}
+            <MenuItem key={company.companyId} value={company.companyId}>
+              {company.name}
             </MenuItem>
           ))}
         </Select>
         <Select
-          value={employeeData.magic_pill_plan_id}
+          value={employeeData.planId}
           onChange={handleChange}
           displayEmpty
           fullWidth
-          name="magic_pill_plan_id"
+          name="planId"
           margin="dense"
         >
           <MenuItem disabled value="">
             <em>Select a plan</em>
           </MenuItem>
           {plans.map(plan => (
-            <MenuItem key={plan.magic_pill_plan_id} value={plan.magic_pill_plan_id}>
-              {plan.plan_name}
+            <MenuItem key={plan.planId} value={plan.planId}>
+              {plan.name}
             </MenuItem>
           ))}
         </Select>
@@ -222,20 +214,20 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
         />
         <TextField
           margin="dense"
-          name="first_name"
+          name="firstName"
           label="First Name"
           type="text"
           fullWidth
-          value={employeeData.first_name}
+          value={employeeData.firstName}
           onChange={handleChange}
         />
         <TextField
           margin="dense"
-          name="last_name"
+          name="lastName"
           label="Last Name"
           type="text"
           fullWidth
-          value={employeeData.last_name}
+          value={employeeData.lastName}
           onChange={handleChange}
         />
         <TextField
@@ -270,15 +262,15 @@ AddEmployeeDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   companies: PropTypes.arrayOf(
     PropTypes.shape({
-      insurance_company_id: PropTypes.number.isRequired,
-      insurance_company_name: PropTypes.string.isRequired,
-      insurance_company_phone_number: PropTypes.string
+      companyId: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+      phoneNumber: PropTypes.string
     })
   ).isRequired,
   plans: PropTypes.arrayOf(
     PropTypes.shape({
-      magic_pill_plan_id: PropTypes.number.isRequired,
-      plan_name: PropTypes.string.isRequired,
+      planId: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
     })
   ).isRequired,
   employees: PropTypes.array.isRequired,

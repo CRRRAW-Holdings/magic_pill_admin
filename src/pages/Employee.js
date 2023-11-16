@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -9,8 +9,7 @@ import {
   setProcessedCsvData,
   resetProcessedCsvData,
 } from '../slices/employeeSlice';
-import { fetchCompanies } from '../slices/companySlice';
-import { fetchPlans } from '../slices/planSlice'; // Import fetchPlans
+import { fetchPlansThunk } from '../slices/planSlice';
 
 import { processFile } from '../utils/csvUtil';
 import { toast } from 'react-toastify';
@@ -31,6 +30,9 @@ import { CompanyName, LockedTooltip, StyledPaper, StyledSearchBar } from '../sty
 import { EmployeeRow, HeaderCell, HeaderTableRow, StyledTable, StyledTableCell, StyledTableContainer } from '../styles/tableStyles';
 import { AddEmployeeButton, DisableButton, EditButton, EnableButton, UploadCSVButton } from '../styles/buttonComponents';
 import { ActionContainer, NavbarContainer } from '../styles/containerStyles';
+import { selectCurrentAdmin } from '../selectors';
+import { AuthContext } from '../utils/AuthProvider';
+import { fetchAdminDetails } from '../slices/companySlice';
 
 
 const defaultEmployees = [];
@@ -54,14 +56,17 @@ SortableHeaderCell.propTypes = {
 function Employee() {
   const { id: companyId } = useParams();
   const dispatch = useDispatch();
+  const { currentUser } = useContext(AuthContext);
+
 
   // Data State
   const employees = useSelector((state) => state.employee?.employees || defaultEmployees);
-  const companies = useSelector((state) => state.company.companies);
+  const currentAdmin = useSelector(selectCurrentAdmin);
   const plans = useSelector((state) => state.plan.plans);
-  const companyName = useSelector((state) => state.employee.companyName);
   const selectedEmployee = useSelector((state) => state.employee.selectedEmployee);
   const processedCsvData = useSelector((state) => state.employee.processedCsvData) || [];
+  const companies = currentAdmin?.companies || [];
+  const companyName = companies.find(c => c.companyId === parseInt(companyId))?.name || '';
 
   const isLoading = useSelector(state => state.employee.isLoading);
 
@@ -76,8 +81,8 @@ function Employee() {
 
   useEffect(() => {
     dispatch(fetchEmployees(companyId));
-    dispatch(fetchCompanies());
-    dispatch(fetchPlans());
+    dispatch(fetchAdminDetails(currentUser?.email));
+    dispatch(fetchPlansThunk());
   }, [companyId, dispatch]);
 
   const fileRef = useRef(null);
@@ -90,24 +95,43 @@ function Employee() {
   };
 
   const filteredEmployees = useMemo(() => {
-    const searchTerm = searchQuery.toLowerCase();
+    console.log(employees);
+    const searchTerm = searchQuery?.toLowerCase();
     return [...employees]
       .filter(employee =>
-        employee.username.toLowerCase().includes(searchTerm) ||
-        employee.email.toLowerCase().includes(searchTerm)
+        employee.firstName?.toLowerCase().includes(searchTerm) ||
+        employee.lastName?.toLowerCase().includes(searchTerm) ||
+        employee.email?.toLowerCase().includes(searchTerm)
       )
       .sort((a, b) => {
         const sortOrderMultiplier = sortOrder.direction === 'asc' ? 1 : -1;
+
+        // This function handles null or undefined values in sorting
+        const safeCompare = (valueA, valueB) => {
+          if (valueA == null && valueB == null) return 0;
+          if (valueA == null) return -1;
+          if (valueB == null) return 1;
+          return valueA.toString().localeCompare(valueB.toString());
+        };
+
         switch (sortOrder.column) {
         case 'status':
-          return (b.is_active - a.is_active) * sortOrderMultiplier;
+          return (b.isActive - a.isActive) * sortOrderMultiplier;
         case 'plan':
-          return a.magic_pill_plan?.plan_name.localeCompare(b.magic_pill_plan?.plan_name) * sortOrderMultiplier;
+          return safeCompare(a.planName, b.planName) * sortOrderMultiplier;
+        case 'firstName':
+          return safeCompare(a.firstName, b.firstName) * sortOrderMultiplier;
+        case 'lastName':
+          return safeCompare(a.lastName, b.lastName) * sortOrderMultiplier;
+        case 'email':
+          return safeCompare(a.email, b.email) * sortOrderMultiplier;
+          // Add more cases for other sortable columns
         default:
           return 0;
         }
       });
   }, [employees, searchQuery, sortOrder]);
+
 
   const handleSearch = (value) => {
     setSearchQuery(value);
@@ -119,8 +143,9 @@ function Employee() {
   };
 
   const toggleEmployeeStatus = (employee) => {
-    dispatch(toggleEmployeeStatusThunk(employee.user_id))
+    dispatch(toggleEmployeeStatusThunk(employee.documentId))
       .then((value) => {
+        console.log(value);
         toast.success('Employee toggle successful');
       })
       .catch(() => {
@@ -128,8 +153,8 @@ function Employee() {
       });
   };
   const handleUserDialogClose = (updatedUser) => {
-    if (updatedUser.user_id) {
-      toast.success(`${updatedUser.first_name} ${updatedUser.last_name} was added successfully!`);
+    if (updatedUser.documentId) {
+      toast.success(`${updatedUser.firstName} ${updatedUser.lastName} was added successfully!`);
     }
     setIsEditEmployeeDialogOpen(false);
   };
@@ -195,52 +220,52 @@ function Employee() {
         <StyledTable>
           <TableHead>
             <HeaderTableRow>
-              <HeaderCell>First Name</HeaderCell>
-              <HeaderCell>Last Name</HeaderCell>
-              <HeaderCell>Email</HeaderCell>
-              <SortableHeaderCell sortOrder={sortOrder} column="plan" toggleSort={toggleSort}>Plan</SortableHeaderCell>
+              <SortableHeaderCell sortOrder={sortOrder} column="firstName" toggleSort={toggleSort}>First Name</SortableHeaderCell>
+              <SortableHeaderCell sortOrder={sortOrder} column="lastName" toggleSort={toggleSort}>Last Name</SortableHeaderCell>
+              <SortableHeaderCell sortOrder={sortOrder} column="email" toggleSort={toggleSort}>Email</SortableHeaderCell>
+              <SortableHeaderCell sortOrder={sortOrder} column="planName" toggleSort={toggleSort}>Plan</SortableHeaderCell>
               <SortableHeaderCell sortOrder={sortOrder} column="status" toggleSort={toggleSort}>Status</SortableHeaderCell>
               <HeaderCell>Edit</HeaderCell>
             </HeaderTableRow>
           </TableHead>
           <TableBody>
             {filteredEmployees.map((employee) => (
-              <EmployeeRow key={employee.user_id} isActive={employee.is_active}>
+              <EmployeeRow key={employee.documentId} isActive={employee.isActive}>
                 <StyledTableCell>
                   <div style={{ display: 'flex', alignItems: 'center' }}>
-                    {employee.is_active ? (
+                    {employee.isActive ? (
                       <>
                         <PersonIcon style={{ marginRight: '8px', color: theme.palette.primary.light }} />
-                        {employee.first_name}
+                        {employee.firstName}
                       </>
                     ) : (
                       <LockedTooltip title="Employee is disabled">
                         <>
                           <LockIcon color="error" style={{ marginRight: '8px' }} />
-                          {employee.first_name}
+                          {employee.firstName}
                         </>
                       </LockedTooltip>
                     )}
                   </div>
                 </StyledTableCell>
                 <StyledTableCell>
-                  {employee.is_active ? (
-                    employee.last_name
+                  {employee.isActive ? (
+                    employee.lastName
                   ) : (
                     <LockedTooltip title="Employee is disabled">
-                      {employee.last_name}
+                      {employee.lastName}
                     </LockedTooltip>
                   )}
                 </StyledTableCell>
                 <StyledTableCell>{employee.email}</StyledTableCell>
-                <StyledTableCell>{employee.magic_pill_plan?.plan_name}</StyledTableCell>
+                <StyledTableCell>{employee.planName}</StyledTableCell>
                 <StyledTableCell>
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     {isLoading ? (
                       <CircularProgress size={24} />
                     ) : (
                       <>
-                        {employee.is_active ? (
+                        {employee.isActive ? (
                           <DisableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Disable</DisableButton>
                         ) : (
                           <EnableButton variant="contained" onClick={() => toggleEmployeeStatus(employee)}>Enable</EnableButton>

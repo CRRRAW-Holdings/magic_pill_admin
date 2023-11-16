@@ -26,25 +26,25 @@ const dialogHeaderStyle = {
 
 const columnToTitleMapping = {
   email: 'Email',
-  plan_name: 'Plan Name',
-  is_active: 'Is Active',
+  planName: 'Plan Name',
+  isActive: 'Is Active',
   address: 'Address',
   dob: 'Date of Birth',
   age: 'Age',
   company: 'Company',
-  first_name: 'First Name',
-  last_name: 'Last Name',
+  firstName: 'First Name',
+  lastName: 'Last Name',
   phone: 'Phone',
 };
 
 const addTabColumns = [
-  'email', 'plan_name', 'is_active',
-  'address', 'dob', 'company', 'first_name', 'last_name',
+  'email', 'planName', 'isActive',
+  'address', 'dob', 'company', 'firstName', 'lastName',
 ];
 
 const updateTabColumns = addTabColumns;//make it prioritize differencecolumns just for this line
 
-const disableTabColumns = ['is_active', 'first_name', 'last_name', 'is_active', 'email', 'dob'];
+const disableTabColumns = ['isActive', 'firstName', 'lastName', 'isActive', 'email', 'dob'];
 
 
 const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companies, plans }) => {
@@ -201,15 +201,15 @@ ComparisonDialog.propTypes = {
   companyId: PropTypes.string.isRequired,
   companies: PropTypes.arrayOf(
     PropTypes.shape({
-      insurance_company_id: PropTypes.number.isRequired,
-      insurance_company_name: PropTypes.string.isRequired,
-      insurance_company_phone_number: PropTypes.string
+      companyId: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+      phoneNumber: PropTypes.string
     })
   ).isRequired,
   plans: PropTypes.arrayOf(
     PropTypes.shape({
-      magic_pill_plan_id: PropTypes.number.isRequired,
-      plan_name: PropTypes.string.isRequired,
+      planId: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
     })
   ).isRequired,
 };

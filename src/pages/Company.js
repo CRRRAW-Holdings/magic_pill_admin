@@ -12,35 +12,34 @@ import {
   ErrorMessage
 } from '../styles/companyComponents';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSearchTerm, fetchCompanies } from '../slices/companySlice';
+import { setSearchTerm, fetchAdminDetails } from '../slices/companySlice';
 import {
+  selectCurrentAdmin,
   selectSearchTerm,
   selectHasError,
   selectErrorMessage,
-  selectFilteredCompanies,
 } from '../selectors';
 import { CardContent } from '@mui/material';
 import { AuthContext } from '../utils/AuthProvider';
 import { LogoutButton } from '../styles/buttonComponents';
 
-
-
 const Company = () => {
   const dispatch = useDispatch();
-  const { currentAdmin, signOut } = useContext(AuthContext);
+  const { currentUser, signOut } = useContext(AuthContext);
 
-
+  const currentAdmin = useSelector(selectCurrentAdmin);
   const searchTerm = useSelector(selectSearchTerm);
   const hasError = useSelector(selectHasError);
   const errorMessage = useSelector(selectErrorMessage);
 
   useEffect(() => {
-    dispatch(fetchCompanies());
-    console.log(currentAdmin, 'COMPANY PAGE USEEFFECT ADMIN');
+    dispatch(fetchAdminDetails(currentUser.email));
 
   }, [dispatch]);  
-  
-  const filteredCompanies = useSelector(selectFilteredCompanies);
+
+  const filteredCompanies = currentAdmin?.companies?.filter(company =>
+    company.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
     <Wrapper>
@@ -65,15 +64,15 @@ const Company = () => {
         <CompanyList>
           {filteredCompanies.map((company) => (
             <RouterLink
-              to={`/company/${company.insurance_company_id}`}
+              to={`/company/${company.companyId}`}
               style={{ textDecoration: 'none' }}
-              key={company.insurance_company_id}
+              key={company.companyId}
             >
               <CompanyCard>
                 <CardContent>
                   <CardContainer>
                     <CompanyLink>
-                      {company.insurance_company_name}
+                      {company.name}
                     </CompanyLink>
                   </CardContainer>
                 </CardContent>

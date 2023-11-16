@@ -1,18 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useSelector, useDispatch } from 'react-redux';
 import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
 import { FormField, LoginButton, Wrapper, Content, LoginCard, Logo } from '../styles/styledLanding';
-import { getAdminByEmail } from '../slices/authSlice';
 import { isValidEmail } from '../utils/fieldUtil';
 import logo from '../assets/images/logochandan2.png';
 import CheckEmail from './CheckEmail';
 import { AuthContext } from '../utils/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { CircularProgress } from '@mui/material';
-
-// const ERROR_MESSAGE = 'Error: This admin email is not registered in our system';
 
 const LoginForm = ({ email, setEmail, handleSubmit, submitted, loading }) => (
   <>
@@ -54,38 +50,37 @@ LoginForm.propTypes = {
   loading: PropTypes.bool.isRequired,
 };
 
-
 const Landing = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
-
-  const { currentAdmin, initializationCompleted} = useContext(AuthContext);
+  const [emailLinkSent, setEmailLinkSent] = useState(false);
+  const [emailVerificationLoading, setEmailVerificationLoading] = useState(false);
+  const { currentUser, loading: authLoading, checkAdminByEmail, initializationCompleted } = useContext(AuthContext);
   const navigate = useNavigate();
-
-
-  const loginState = useSelector(state => state.auth.loading ? 'loading' : state.auth.error ? 'error' : 'success');
-  const error = useSelector(state => state.auth.error); // Use this for a descriptive error message
-  const loading = useSelector(state => state.auth.loading); // Use this for a descriptive error message
-
-  const dispatch = useDispatch();
-
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitted(true);
     if (!isValidEmail(email)) return;
-    dispatch(getAdminByEmail(email));
+    setEmailVerificationLoading(true);
+    try {
+      await checkAdminByEmail(email);
+      setEmailLinkSent(true);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setEmailVerificationLoading(false);
+    }
   };
 
   useEffect(() => {
-    if (initializationCompleted && currentAdmin?.uid) {
-      console.log(currentAdmin, '*****LANDING**** currentAdmin');
+    if (initializationCompleted && currentUser?.uid) {
       navigate('/company');
     }
-  }, [initializationCompleted, currentAdmin, navigate]);
+  }, [initializationCompleted, currentUser, navigate]);
 
-  // Before initialization is completed or while logging in, show a loading spinner
-  if (!initializationCompleted || loading) {
+  
+  if (!initializationCompleted || authLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress />
@@ -98,12 +93,11 @@ const Landing = () => {
       <Content>
         <LoginCard>
           <CardContent>
-            <Logo src={logo} alt="Magic Pill Logo" />
-            {currentAdmin?.exists ? <CheckEmail /> : <LoginForm {...{ email, setEmail, handleSubmit, submitted, loading }} />}
-            {loginState === 'error' && (
-              <Typography color="error" style={{ marginTop: '16px' }}>
-                {error}
-              </Typography>
+            <Logo src={logo} alt="Logo" />
+            {emailLinkSent && !currentUser?.uid ? (
+              <CheckEmail />
+            ) : (
+              <LoginForm {...{ email, setEmail, handleSubmit, submitted, loading: emailVerificationLoading }} />
             )}
           </CardContent>
         </LoginCard>

@@ -14,12 +14,12 @@ import PrivateRoute from './routes/PrivateRoute';
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <div className='App'>
-        <header className='App-header'>
-          <AuthProvider>
-            <Router>
+    <AuthProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <div className='App'>
+            <header className='App-header'>
               <Routes>
                 <Route path='/' element={<Landing />} />
                 <Route path='/company' element={<PrivateRoute path='/company' element={<Company />} />} />
@@ -27,13 +27,14 @@ function App() {
                 <Route path='/signin-with-email' element={<EmailSignInPage />} />
                 <Route path='*' element={<PrivateRoute path='*' element={<NotFound />} />} />
               </Routes>
-            </Router>
-          </AuthProvider>
-          <ToastContainer />
-        </header>
-      </div>
-    </ThemeProvider>
+            </header>
+          </div>
+        </Router>
+        <ToastContainer />
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
+
 
 export default App;

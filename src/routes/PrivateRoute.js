@@ -1,24 +1,20 @@
 import React, { useContext, useEffect } from 'react';
-import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { CircularProgress } from '@mui/material';
-import { selectAuthIsLoading } from '../selectors';
 import { AuthContext } from '../utils/AuthProvider';
 
 // eslint-disable-next-line react/prop-types
 const PrivateRoute = ({ path, element }) => {
-  const { currentAdmin, initializationCompleted } = useContext(AuthContext);
-  const isLoading = useSelector(selectAuthIsLoading);
+  const { currentUser, initializationCompleted, loading } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // console.log(isLoading, currentAdmin);
-    if (initializationCompleted && !isLoading && !currentAdmin) {
+    if (initializationCompleted && !loading && !currentUser) {
       navigate('/', { replace: true, state: { from: path } });
     }
-  }, [isLoading, currentAdmin, navigate, path, initializationCompleted]);
+  }, [loading, currentUser, navigate, path, initializationCompleted]);
 
-  if (!initializationCompleted || isLoading) {
+  if (!initializationCompleted || loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress style={{ color: '#ffffff' }} />
@@ -26,7 +22,7 @@ const PrivateRoute = ({ path, element }) => {
     );
   }
 
-  if (currentAdmin) {
+  if (currentUser) {
     return element;
   }
 
