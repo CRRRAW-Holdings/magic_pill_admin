@@ -76,105 +76,13 @@ const readFileContent = (file, onSuccess, onError) => {
 };
 
 const validateData = (parsedData) => {
-  console.log(parsedData);
   for (const record of parsedData) {
-    console.log(record);
     if (!record.email || !record.dob /* ... other validations */) {
       throw new ProcessingError('Invalid data: missing required fields.', 'VALIDATION_ERROR');
     }
   }
 };
 
-// const hasDifferences = (oldEmployee, newEmployee, ignoreFields = []) => {
-//   let differencesFound = false;
-//   let changedFields = [];
-//   for (const key of required_fields) {
-//     if (!ignoreFields.includes(key) && oldEmployee[key] !== newEmployee[key]) {
-//       console.log(`Field: ${key}`, `Old Value: ${oldEmployee[key]}`, ` New Value: ${newEmployee[key]}`);
-//       differencesFound = true;
-//       changedFields.push(key);
-//     }
-//   }
-//   return { differencesFound, changedFields };
-// };
-// const hasDifferences = (oldEmployee, newEmployee, ignoreFields = []) => {
-//   let differencesFound = false;
-//   let changedFields = [];
-//   // Get the keys from each object, filtering out the ignored fields
-//   const oldKeys = Object.keys(oldEmployee).filter(key => !ignoreFields.includes(key));
-//   const newKeys = Object.keys(newEmployee).filter(key => !ignoreFields.includes(key));
-//   // Check for missing or extra fields
-//   const allKeys = new Set([...oldKeys, ...newKeys]);  // Combine and deduplicate keys from both objects
-
-//   for (const key of allKeys) {
-//     if (!oldKeys.includes(key)) {
-//       console.log(`Extra Field in New Employee: ${key}`);
-//       differencesFound = true;
-//     } else if (!newKeys.includes(key)) {
-//       console.log(`Missing Field in New Employee: ${key}`);
-//       differencesFound = true;
-//     } else if (oldEmployee[key] !== newEmployee[key]) {
-//       console.log(`Field: ${key}`, `Old Value: ${oldEmployee[key]}`, ` New Value: ${newEmployee[key]}`);
-//       differencesFound = true;
-//       changedFields.push(key);
-//     }
-//   }
-
-//   return { differencesFound, changedFields };
-// };
-
-// const compareFileWithCurrentData = (fileContent, employees, companies, plans, companyId) => {
-//   let results = [];
-//   let processedUsernames = [];
-
-//   fileContent.forEach(fileEmployee => {
-//     const transformedEmployeeFromFile = transformEmployee(fileEmployee, companies, plans);
-
-//     const matchedEmployees = employees.filter(emp =>
-//       emp.email === transformedEmployeeFromFile.email &&
-//       emp.companyId === transformedEmployeeFromFile.companyId &&
-//       (emp.dob === transformedEmployeeFromFile.dob || emp.firstName === transformedEmployeeFromFile.firstName)
-//     );
-//     console.log('***' + transformedEmployeeFromFile.username);
-//     if (matchedEmployees.length === 1) {
-//       const matchedEmployee = matchedEmployees[0];
-//       const isActiveChanged = matchedEmployee.isActive !== transformedEmployeeFromFile.isActive;
-//       const diffResult = hasDifferences(matchedEmployee, transformedEmployeeFromFile, ['isActive']);
-
-//       if (matchedEmployee.isActive && isActiveChanged && !diffResult.differencesFound) {
-//         results.push({
-//           action: 'toggle',
-//           user_data: {
-//             ...transformedEmployeeFromFile,
-//             documentId: matchedEmployee.documentId
-//           }
-//         });
-//       } else if (diffResult.differencesFound) {
-//         results.push({
-//           action: 'update',
-//           user_data: {
-//             ...transformedEmployeeFromFile,
-//             documentId: matchedEmployee.documentId,
-//           },
-//           changedFields: diffResult.changedFields
-//         });
-//       }
-//       processedUsernames.push(transformedEmployeeFromFile.username);
-//       employees = employees.filter(emp => emp.username !== matchedEmployee.username);
-//     } else if (matchedEmployees.length > 1) {
-//       throw new ProcessingError('Duplicate data found for: ' + JSON.stringify(transformedEmployeeFromFile), 'DUPLICATE_DATA_ERROR');
-//     } else {
-//       results.push({
-//         action: 'add',
-//         username: transformedEmployeeFromFile.username,
-//         user_data: transformedEmployeeFromFile
-//       });
-//       processedUsernames.push(transformedEmployeeFromFile.username);
-//     }
-//   });
-//   console.log(results);
-//   return results;
-// };
 
 
 export const processFile = (file, employees, companies, plans, companyId, onSuccess, onError) => {

@@ -94,7 +94,6 @@ function Employee() {
   };
 
   const filteredEmployees = useMemo(() => {
-    console.log(employees, 'employees');
     const searchTerm = searchQuery?.toLowerCase();
     return [...employees]
       .filter(employee =>

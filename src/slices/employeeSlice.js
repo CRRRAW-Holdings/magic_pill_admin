@@ -71,7 +71,6 @@ export const approveEmployeeChangesThunk = createAsyncThunk(
   }
 );
 
-
 export const resetProcessedCsvData = createAction('employee/resetProcessedCsvData');
 
 const employeeSlice = createSlice({

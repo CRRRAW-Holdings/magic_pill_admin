@@ -59,9 +59,6 @@ const ComparisonDialog = ({ open, onClose, employeeChanges, companyId }) => {
     return { ...edit, changes: displayChanges };
   });
 
-  console.log(added, 'added');
-  console.log(editedForDisplay, 'edited');
-
   const tabStyle = (index) => ({
     backgroundColor: selectedTab === index ? theme.palette.primary.main : 'transparent',
     color: selectedTab === index ? 'white' : theme.palette.text.primary
