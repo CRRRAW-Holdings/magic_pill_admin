@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
-import { uploadCSVThunk } from '../slices/employeeSlice';
 import {
   CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Tabs, Tab
@@ -9,9 +8,9 @@ import {
 import theme from '../theme';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import PersonOffIcon from '@mui/icons-material/PersonOff';
 import UserTable from './UserTable';
 import { toast } from 'react-toastify';
+import { approveEmployeeChangesThunk } from '../slices/employeeSlice';
 
 const dialogContentStyle = {
   height: '600px',
@@ -20,7 +19,7 @@ const dialogContentStyle = {
 
 const dialogHeaderStyle = {
   display: 'flex',
-  justifyContent: 'space-between', // Or 'center' if you prefer
+  justifyContent: 'space-between',
   alignItems: 'center',
 };
 
@@ -42,52 +41,55 @@ const addTabColumns = [
   'address', 'dob', 'company', 'firstName', 'lastName',
 ];
 
-const updateTabColumns = addTabColumns;//make it prioritize differencecolumns just for this line
+const updateTabColumns = addTabColumns;
 
-const disableTabColumns = ['isActive', 'firstName', 'lastName', 'isActive', 'email', 'dob'];
-
-
-const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companies, plans }) => {
+const ComparisonDialog = ({ open, onClose, employeeChanges, companyId }) => {
   const dispatch = useDispatch();
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [checkedItems, setCheckedItems] = useState([]);
-  const [selectAll, setSelectAll] = useState({ added: false, edited: false, disabled: false });
 
+  const [selectedTab, setSelectedTab] = useState(0);
   const isLoading = useSelector(state => state.employee.uploadProgress.isLoading);
 
-  const added = processedCsvData.filter(data => data.action === 'add');
-  const edited = processedCsvData.filter(data => data.action === 'update');
-  const disabled = processedCsvData.filter(data => data.action === 'toggle');
-  const tabStyle = (index) => {
-    switch (index) {
-    case 0:
-      return { backgroundColor: selectedTab === 0 ? theme.palette.primary.main : 'transparent', color: selectedTab === 0 ? 'white' : theme.palette.success.dark };
-    case 1:
-      return { backgroundColor: selectedTab === 1 ? theme.palette.primary.main : 'transparent', color: selectedTab === 1 ? 'white' : 'orange' };
-    case 2:
-      return { backgroundColor: selectedTab === 2 ? theme.palette.primary.main : 'transparent', color: selectedTab === 2 ? 'white' : theme.palette.error.dark };
-    default:
-      return {};
-    }
-  };
+  const added = employeeChanges.adds || [];
+  const edited = employeeChanges.edits || [];
+  const editedForDisplay = edited.map(edit => {
+    const displayChanges = Object.entries(edit.changes).map(([key, { oldValue, newValue }]) => ({
+      field: key,
+      change: `${oldValue} → ${newValue}`
+    }));
+    return { ...edit, changes: displayChanges };
+  });
+
+  console.log(added, 'added');
+  console.log(editedForDisplay, 'edited');
+
+  const tabStyle = (index) => ({
+    backgroundColor: selectedTab === index ? theme.palette.primary.main : 'transparent',
+    color: selectedTab === index ? 'white' : theme.palette.text.primary
+  });
+
   const handleApprove = () => {
-    const dataToUpload = [...added, ...edited, ...disabled]
-      .filter(item => checkedItems.includes(item.user_data.username))
-      .map(item => ({
-        action: item.action,
-        user_data: item.user_data,
-      }));
-    dispatch(uploadCSVThunk(dataToUpload))
-      .then((action) => {
-        if (action.type === 'employee/uploadCSV/fulfilled') {
-          toast.success('Successful Upload!');
-          onClose();
-        } else {
-          toast.error('Failed Upload');
-        }
+    const processedAdded = added;
+
+    const processedEdited = edited.map(edit => ({
+      ...edit.updatedObject,
+      documentId: edit.id
+    }));
+
+    const approvedData = {
+      added: processedAdded,
+      edited: processedEdited,
+    };
+
+    dispatch(approveEmployeeChangesThunk({ approvedData, companyId }))
+      .then(() => {
+        toast.success('Changes Approved and Sent to Database');
+        onClose(); 
+      })
+      .catch((error) => {
+        toast.error('Error approving changes: ' + error);
       });
   };
-
+  
   const handleDecline = () => {
     toast.info('File Upload was Declined');
     onClose();
@@ -98,20 +100,6 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
     onClose();
   };
 
-
-  const handleSelectAll = (tab) => {
-    let items = [];
-    if (tab === 'added') items = added;
-    else if (tab === 'edited') items = edited;
-    else if (tab === 'disabled') items = disabled;
-
-    if (selectAll[tab]) {
-      setCheckedItems(prevCheckedItems => prevCheckedItems.filter(id => !items.map(user => user.user_data.username).includes(id)));
-    } else {
-      setCheckedItems(prevCheckedItems => [...new Set([...prevCheckedItems, ...items.map(user => user.user_data.username)])]);
-    }
-    setSelectAll(prevSelectAll => ({ ...prevSelectAll, [tab]: !prevSelectAll[tab] }));
-  };
   return (
     <Dialog open={open} onClose={handleCancel} fullWidth maxWidth="lg">
       <DialogTitle>
@@ -128,7 +116,6 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
           >
             <Tab label="Added" style={tabStyle(0)} />
             <Tab label="Edited" style={tabStyle(1)} />
-            <Tab label="Disabled" style={tabStyle(2)} />
           </Tabs>
           <div style={{ flex: 1 }} />
         </div>
@@ -139,35 +126,17 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
             type="added"
             columns={addTabColumns}
             users={added}
-            handleSelectAll={handleSelectAll}
-            selectAll={selectAll}
             IconComponent={AddIcon}
             columnMapping={columnToTitleMapping}
-          // backgroundColor={theme.palette.success.light}
           />
         )}
         {selectedTab === 1 && (
           <UserTable
             type="edited"
             columns={updateTabColumns}
-            users={edited}
-            handleSelectAll={handleSelectAll}
-            selectAll={selectAll}
+            users={editedForDisplay}
             IconComponent={EditIcon}
             columnMapping={columnToTitleMapping}
-          // backgroundColor={theme.palette.warning.main}
-          />
-        )}
-        {selectedTab === 2 && (
-          <UserTable
-            type="disabled"
-            columns={disableTabColumns}
-            users={disabled}
-            handleSelectAll={handleSelectAll}
-            selectAll={selectAll}
-            IconComponent={PersonOffIcon}
-            columnMapping={columnToTitleMapping}
-          // backgroundColor={theme.palette.error.dark}
           />
         )}
       </DialogContent>
@@ -184,12 +153,11 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
           onClick={handleApprove}
           color="primary"
           variant="contained"
-          disabled={checkedItems.length !== (added.length + edited.length + disabled.length) || isLoading}
+          disabled={isLoading}
         >
           Approve Changes
         </Button>
       </DialogActions>
-
     </Dialog>
   );
 };
@@ -197,21 +165,13 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
 ComparisonDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  processedCsvData: PropTypes.arrayOf(PropTypes.object).isRequired,
+  employeeChanges: PropTypes.shape({
+    adds: PropTypes.arrayOf(PropTypes.object),
+    edits: PropTypes.arrayOf(PropTypes.object),
+  }).isRequired,
   companyId: PropTypes.string.isRequired,
-  companies: PropTypes.arrayOf(
-    PropTypes.shape({
-      companyId: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-      phoneNumber: PropTypes.string
-    })
-  ).isRequired,
-  plans: PropTypes.arrayOf(
-    PropTypes.shape({
-      planId: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-    })
-  ).isRequired,
+  companies: PropTypes.arrayOf(PropTypes.object).isRequired,
+  plans: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
 export default ComparisonDialog;

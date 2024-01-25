@@ -1,4 +1,4 @@
-import { firestore } from './authfirebase'; // Adjust the path as necessary
+import { firestore } from './authfirebase';
 import {
   collection,
   query,
@@ -9,6 +9,7 @@ import {
   doc,
   getDoc
 } from 'firebase/firestore';
+import axios from 'axios';
 
 export const fetchAdminByEmail = async (email) => {
   try {
@@ -196,4 +197,44 @@ export const fetchPlans = async () => {
   const plansRef = collection(firestore, 'plans');
   const querySnapshot = await getDocs(plansRef);
   return querySnapshot.docs.map(doc => doc.data());
+};
+
+
+export const uploadCSVData = async (companyId, csvData) => {
+  try {
+    const url = `http://localhost:8080/bulk-upload/${companyId}`;
+    const response = await axios.post(url, csvData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return {
+      status: 'success',
+      data: response.data,
+    };
+  } catch (error) {
+    throw new Error(error.response?.data || 'An error occurred while uploading CSV data.');
+  }
+};
+
+export const approveEmployeeChanges = async (approvedData, companyId) => {
+  try {
+    const url = `http://localhost:8080/approve-employee-changes/${companyId}`;
+    const response = await axios.post(url, approvedData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (response.status === 200) {
+      return {
+        status: 'success',
+        data: response.data
+      };
+    } else {
+      throw new Error('Failed to process the approved changes');
+    }
+  } catch (error) {
+    console.error('Error in approveEmployeeChanges:', error);
+    throw error;
+  }
 };

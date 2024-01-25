@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk, createAction } from '@reduxjs/toolkit';
 import {
   fetchEmployeesFromCompany, addEmployeeToCompany, updateEmployeeDetails, toggleEmployeeStatus,
-  // uploadCSVData
+  uploadCSVData,
+  approveEmployeeChanges
 } from '../services/api';
 
 export const fetchEmployees = createAsyncThunk(
@@ -47,30 +48,29 @@ export const toggleEmployeeStatusThunk = createAsyncThunk(
 
 export const uploadCSVThunk = createAsyncThunk(
   'employee/uploadCSV',
-  async (csvData, api) => {
+  async ({ companyId, parsedData }, { dispatch, rejectWithValue }) => {
     try {
-      console.log(csvData);
-      // const response = await uploadCSVData(csvData, (progress) => {
-      //   api.dispatch(updateUploadProgress(progress));
-      // });
-      // console.log(response);
-      // return response;
+      const response = await uploadCSVData(companyId, parsedData);
+      return response.data;
     } catch (error) {
-      return api.rejectWithValue(error.message);
+      return rejectWithValue(error.message);
     }
   }
 );
 
-export const previewCSVThunk = createAsyncThunk(
-  'employee/previewCSV',
-  async (csvData, { dispatch, getState }) => {
+export const approveEmployeeChangesThunk = createAsyncThunk(
+  'employee/approveEmployeeChanges',
+  async ({ approvedData, companyId }, { rejectWithValue }) => {
     try {
-      return csvData; 
+      const response = await approveEmployeeChanges(approvedData, companyId);
+      console.log(response, 'response');
+      return response;
     } catch (error) {
-      return Promise.reject(error.message);
+      return rejectWithValue(error.message);
     }
   }
 );
+
 
 export const resetProcessedCsvData = createAction('employee/resetProcessedCsvData');
 
@@ -81,6 +81,10 @@ const employeeSlice = createSlice({
       isLoading: false,
       percentage: 0,
       message: '',
+    },
+    employeeChanges: {
+      adds: [],
+      edits: [],
     },
     processedCsvData: [],
     isComparisonDialogOpen: false,
@@ -175,7 +179,6 @@ const employeeSlice = createSlice({
       .addCase(toggleEmployeeStatusThunk.fulfilled, (state, action) => {
         state.isLoading = false;
         if (action.payload) {
-          console.log(action.payload, state);
           const index = state.employees.findIndex(e => e.documentId === action.payload.documentId);
           if (index !== -1) {
             state.employees[index] = action.payload;
@@ -186,27 +189,26 @@ const employeeSlice = createSlice({
         state.hasError = true;
         state.isLoading = false;
         state.errorMessage = action.payload || 'There was an issue toggling the employee status. Please try again later.';
+      })
+      .addCase(uploadCSVThunk.pending, (state) => {
+        state.uploadProgress.isLoading = true;
+        state.uploadProgress.message = 'Uploading...';
+        state.uploadProgress.percentage = 0;
+      })
+      .addCase(uploadCSVThunk.fulfilled, (state, action) => {
+        state.employeeChanges = action.payload;
+        state.uploadProgress.isLoading = false;
+        state.uploadProgress.message = 'Upload complete!';
+        state.uploadProgress.percentage = 100;
+      })
+      .addCase(uploadCSVThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.hasError = true;
+        state.errorMessage = action.error.message;
+        state.uploadProgress.isLoading = false;
+        state.uploadProgress.message = 'Upload failed!';
+        state.uploadProgress.percentage = 0;
       });
-    // .addCase(uploadCSVThunk.pending, (state) => {
-    //   state.uploadProgress.isLoading = true;
-    //   state.uploadProgress.message = 'Uploading...';
-    //   // Reset percentage
-    //   state.uploadProgress.percentage = 0;
-    // })
-    // .addCase(uploadCSVThunk.fulfilled, (state, action) => {
-    //   state.employees = action.payload;
-    //   state.uploadProgress.isLoading = false;
-    //   state.uploadProgress.message = 'Upload complete!';
-    //   state.uploadProgress.percentage = 100;
-    // })
-    // .addCase(uploadCSVThunk.rejected, (state, action) => {
-    //   state.isLoading = false;
-    //   state.hasError = true;
-    //   state.errorMessage = action.error.message;
-    //   state.uploadProgress.isLoading = false;
-    //   state.uploadProgress.message = 'Upload failed!';
-    //   state.uploadProgress.percentage = 0;
-    // });
   }
 });
 

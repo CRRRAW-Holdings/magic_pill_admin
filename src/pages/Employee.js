@@ -6,7 +6,7 @@ import {
   fetchEmployees,
   selectEmployee,
   toggleEmployeeStatusThunk,
-  setProcessedCsvData,
+  uploadCSVThunk,
   resetProcessedCsvData,
 } from '../slices/employeeSlice';
 import { fetchPlansThunk } from '../slices/planSlice';
@@ -35,7 +35,6 @@ import { AuthContext } from '../utils/AuthProvider';
 import { fetchAdminDetails } from '../slices/companySlice';
 
 
-const defaultEmployees = [];
 
 const SortableHeaderCell = ({ children, sortOrder, column, toggleSort }) => (
   <HeaderCell onClick={() => toggleSort(column)} style={{ cursor: 'pointer' }}>
@@ -60,11 +59,11 @@ function Employee() {
 
 
   // Data State
-  const employees = useSelector((state) => state.employee?.employees || defaultEmployees);
+  const employees = useSelector((state) => state.employee?.employees || []);
+  const employeeChanges = useSelector((state) => state.employee.employeeChanges) || [];
   const currentAdmin = useSelector(selectCurrentAdmin);
   const plans = useSelector((state) => state.plan.plans);
   const selectedEmployee = useSelector((state) => state.employee.selectedEmployee);
-  const processedCsvData = useSelector((state) => state.employee.processedCsvData) || [];
   const companies = currentAdmin?.companies || [];
   const companyName = companies.find(c => c.companyId === parseInt(companyId))?.name || '';
 
@@ -95,13 +94,13 @@ function Employee() {
   };
 
   const filteredEmployees = useMemo(() => {
-    console.log(employees);
+    console.log(employees, 'employees');
     const searchTerm = searchQuery?.toLowerCase();
     return [...employees]
       .filter(employee =>
-        employee.firstName?.toLowerCase().includes(searchTerm) ||
-        employee.lastName?.toLowerCase().includes(searchTerm) ||
-        employee.email?.toLowerCase().includes(searchTerm)
+        (typeof employee.firstName === 'string' && employee.firstName.toLowerCase().includes(searchTerm)) ||
+        (typeof employee.lastName === 'string' && employee.lastName.toLowerCase().includes(searchTerm)) ||
+        (typeof employee.email === 'string' && employee.email.toLowerCase().includes(searchTerm))
       )
       .sort((a, b) => {
         const sortOrderMultiplier = sortOrder.direction === 'asc' ? 1 : -1;
@@ -162,16 +161,21 @@ function Employee() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    e.target.value = null;  // Reset the file input    
+    e.target.value = null;
     processFile(
       file,
       employees,
       companies,
       plans,
       companyId,
-      (comparedData) => {
-        dispatch(setProcessedCsvData(comparedData));
-        setIsComparisonDialogOpen(true);
+      (parsedData) => {
+        dispatch(uploadCSVThunk({ companyId: companyId, parsedData: parsedData })).then((action) => {
+          if (uploadCSVThunk.fulfilled.match(action)) {
+            setIsComparisonDialogOpen(true);
+          } else if (uploadCSVThunk.rejected.match(action)) {
+            toast.error('Error processing CSV!', action.payload || action.error.message);
+          }
+        });
       },
       (error) => {
         toast.error('Error processing CSV!', error);
@@ -290,7 +294,7 @@ function Employee() {
       </StyledTableContainer>
       <AddEmployeeDialog open={isAddEmployeeDialogOpen} onClose={() => setIsAddEmployeeDialogOpen(false)} companyId={companyId} companies={companies} plans={plans} employees={employees} />
       {selectedEmployee && <EditEmployeeDialog open={isEditEmployeeDialogOpen} onClose={(arg) => handleUserDialogClose(arg)} companyId={companyId} employee={selectedEmployee} companies={companies} plans={plans} />}
-      <ComparisonDialog open={isComparisonDialogOpen} onClose={handleComparisonDialogClose} processedCsvData={processedCsvData} companyId={companyId} companies={companies} plans={plans} />
+      <ComparisonDialog open={isComparisonDialogOpen} onClose={handleComparisonDialogClose}  employeeChanges={employeeChanges} companyId={companyId} companies={companies} plans={plans} />
     </StyledPaper>
   );
 }
