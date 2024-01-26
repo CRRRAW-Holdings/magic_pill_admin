@@ -55,8 +55,10 @@ const Landing = () => {
   const [submitted, setSubmitted] = useState(false);
   const [emailLinkSent, setEmailLinkSent] = useState(false);
   const [emailVerificationLoading, setEmailVerificationLoading] = useState(false);
-  const { currentUser, loading: authLoading, checkAdminByEmail, initializationCompleted } = useContext(AuthContext);
+  const { currentUser, currentAdmin,  loading: authLoading, checkAdminByEmail, initializationCompleted } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  console.log(currentAdmin);
 
   const handleSubmit = async (event) => {
     event.preventDefault();

@@ -5,8 +5,12 @@ import { AuthContext } from '../utils/AuthProvider';
 
 // eslint-disable-next-line react/prop-types
 const PrivateRoute = ({ path, element }) => {
-  const { currentUser, initializationCompleted, loading } = useContext(AuthContext);
+  const { currentUser, currentAdmin,  initializationCompleted, loading } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  console.log(currentUser, 'currentUser');
+  console.log(currentAdmin, 'currentAdmin');
+  
 
   useEffect(() => {
     if (initializationCompleted && !loading && !currentUser) {

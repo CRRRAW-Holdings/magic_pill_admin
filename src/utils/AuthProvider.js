@@ -14,10 +14,9 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [currentAdmin, setCurrentAdmin] = useState(null); // Add this state
+  const [currentAdmin, setCurrentAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [initializationCompleted, setInitializationCompleted] = useState(false);
-
 
   const checkAdminByEmail = async (email) => {
     try {
@@ -29,51 +28,48 @@ export const AuthProvider = ({ children }) => {
         throw new Error('This admin email is not registered in our system');
       }
     } catch (error) {
-      console.error(error.message);
-      // Handle error (e.g., show notification)
+      console.log(error.message);
     }
   };
 
   const sendSignInLink = async (email) => {
     try {
       const actionCodeSettings = {
-        // url: `${process.env.REACT_APP_BASE_URL}/signin-with-email`,
-        url: 'http://localhost:3000/signin-with-email',
+        url: `${process.env.REACT_APP_BASE_URL}/signin-with-email`,
         handleCodeInApp: true,
       };
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
       window.localStorage.setItem('emailForSignIn', email);
     } catch (error) {
-      console.error(error.message);
-      // Handle error
+      console.log(error.message);
     }
   };
 
   const signInWithEmail = async (email, emailLink) => {
     setLoading(true);
-    try {  
+    try {
       if (!email || !isSignInWithEmailLink(auth, emailLink)) {
         throw new Error('Invalid email sign-in link.');
       }
       const result = await signInWithEmailLink(auth, email, emailLink);
       setCurrentUser(result.user);
-      const adminDetails = await fetchAdminByEmail(email); // Fetch admin details
-      setCurrentAdmin(adminDetails); // Set admin details
+      const adminDetails = await fetchAdminByEmail(email);
+      setCurrentAdmin(adminDetails);
     } catch (error) {
-      console.error(error.message);
+      console.log(error.message);
     } finally {
       setLoading(false);
     }
   };
-  
-  // Function to sign out
+
   const signOut = async () => {
     setLoading(true);
     try {
       await firebaseSignOut(auth);
       setCurrentUser(null);
+      setCurrentAdmin(null);
     } catch (error) {
-      console.error(error.message);
+      console.log(error.message);
     } finally {
       setLoading(false);
     }
@@ -83,8 +79,12 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setCurrentUser(user);
       if (user) {
-        const adminDetails = await fetchAdminByEmail(user.email);
-        setCurrentAdmin(adminDetails);
+        try {
+          const adminDetails = await fetchAdminByEmail(user.email);
+          setCurrentAdmin(adminDetails);
+        } catch (error) {
+          console.log(error.message);
+        }
       } else {
         setCurrentAdmin(null);
       }
@@ -104,3 +104,5 @@ export const AuthProvider = ({ children }) => {
 AuthProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
+
+export default AuthProvider;

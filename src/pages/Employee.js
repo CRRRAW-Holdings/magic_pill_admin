@@ -12,7 +12,6 @@ import {
 import { fetchPlansThunk } from '../slices/planSlice';
 
 import { processFile } from '../utils/csvUtil';
-import { toast } from 'react-toastify';
 import theme from '../theme';
 
 import {
@@ -33,6 +32,7 @@ import { ActionContainer, NavbarContainer } from '../styles/containerStyles';
 import { selectCurrentAdmin } from '../selectors';
 import { AuthContext } from '../utils/AuthProvider';
 import { fetchAdminDetails } from '../slices/companySlice';
+import { showErrorToast, showSuccessToast } from '../utils/toastUtil';
 
 
 
@@ -144,15 +144,15 @@ function Employee() {
     dispatch(toggleEmployeeStatusThunk(employee.documentId))
       .then((value) => {
         console.log(value);
-        toast.success('Employee toggle successful');
+        showSuccessToast('Employee toggle successful');
       })
       .catch(() => {
-        toast.error('Failed to toggle employee status!');
+        showErrorToast('Failed to toggle employee status!');
       });
   };
   const handleUserDialogClose = (updatedUser) => {
     if (updatedUser.documentId) {
-      toast.success(`${updatedUser.firstName} ${updatedUser.lastName} was added successfully!`);
+      showSuccessToast(`${updatedUser.firstName} ${updatedUser.lastName} was added successfully!`);
     }
     setIsEditEmployeeDialogOpen(false);
   };
@@ -172,12 +172,12 @@ function Employee() {
           if (uploadCSVThunk.fulfilled.match(action)) {
             setIsComparisonDialogOpen(true);
           } else if (uploadCSVThunk.rejected.match(action)) {
-            toast.error('Error processing CSV!', action.payload || action.error.message);
+            showErrorToast('Error processing CSV!', action.payload || action.error.message);
           }
         });
       },
       (error) => {
-        toast.error('Error processing CSV!', error);
+        showErrorToast('Error processing CSV!', error);
       }
     );
   };

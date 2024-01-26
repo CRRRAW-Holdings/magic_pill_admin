@@ -9,8 +9,8 @@ import theme from '../theme';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import UserTable from './UserTable';
-import { toast } from 'react-toastify';
 import { approveEmployeeChangesThunk } from '../slices/employeeSlice';
+import { showErrorToast, showInfoToast, showSuccessToast } from '../utils/toastUtil';
 
 const dialogContentStyle = {
   height: '600px',
@@ -79,21 +79,21 @@ const ComparisonDialog = ({ open, onClose, employeeChanges, companyId }) => {
 
     dispatch(approveEmployeeChangesThunk({ approvedData, companyId }))
       .then(() => {
-        toast.success('Changes Approved and Sent to Database');
+        showSuccessToast('Changes Approved and Sent to Database');
         onClose(); 
       })
       .catch((error) => {
-        toast.error('Error approving changes: ' + error);
+        showErrorToast('Error approving changes: ' + error);
       });
   };
   
   const handleDecline = () => {
-    toast.info('File Upload was Declined');
+    showInfoToast('File Upload was Declined');
     onClose();
   };
 
   const handleCancel = () => {
-    toast.info('File Upload was Cancelled');
+    showInfoToast('File Upload was Cancelled');
     onClose();
   };
 

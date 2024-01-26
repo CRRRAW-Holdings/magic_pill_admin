@@ -14,10 +14,10 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import PropTypes from 'prop-types';
-import { toast } from 'react-toastify';
 import { getCompanyNameFromInsuranceId } from '../utils/mappingUtils';
 import { isValidEmail } from '../utils/fieldUtil';
 import { CircularProgress } from '@mui/material';
+import { showErrorToast, showSuccessToast } from '../utils/toastUtil';
 
 function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employees }) {
   const dispatch = useDispatch();
@@ -92,13 +92,13 @@ function AddEmployeeDialog({ open, onClose, companyId, companies, plans, employe
             lastName: '',
             phone: '',
           });
-          toast.success(`${action.payload?.firstName} ${action.payload?.lastName} was added successfully!`);
+          showSuccessToast(`${action.payload?.firstName} ${action.payload?.lastName} was added successfully!`);
           onClose();
         } else if (addEmployeeThunk.rejected.match(action)) {
-          toast.error('Error adding employee!', action.error);
+          showErrorToast('Error adding employee!', action.error);
         }
       }).catch(() => {
-        toast.error('Error adding employee!');
+        showErrorToast('Error adding employee!');
       });
   };
 

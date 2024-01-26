@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const EmailSignInPage = () => {
   const { signInWithEmail } = useContext(AuthContext); 
   const navigate = useNavigate();
+  console.log('emailsignin');
 
   useEffect(() => {
     const signIn = async () => {
