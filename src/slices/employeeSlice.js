@@ -63,7 +63,6 @@ export const approveEmployeeChangesThunk = createAsyncThunk(
   async ({ approvedData, companyId }, { rejectWithValue }) => {
     try {
       const response = await approveEmployeeChanges(approvedData, companyId);
-      console.log(response, 'response');
       return response;
     } catch (error) {
       return rejectWithValue(error.message);

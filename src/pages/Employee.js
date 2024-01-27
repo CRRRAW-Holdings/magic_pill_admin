@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useRef, useMemo, useContext } from 'react';
+import React, { useEffect, useState, useRef, useMemo, 
+  // useContext
+} from 'react';
 import PropTypes from 'prop-types';
 import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -30,8 +32,8 @@ import { EmployeeRow, HeaderCell, HeaderTableRow, StyledTable, StyledTableCell, 
 import { AddEmployeeButton, DisableButton, EditButton, EnableButton, UploadCSVButton } from '../styles/buttonComponents';
 import { ActionContainer, NavbarContainer } from '../styles/containerStyles';
 import { selectCurrentAdmin } from '../selectors';
-import { AuthContext } from '../utils/AuthProvider';
-import { fetchAdminDetails } from '../slices/companySlice';
+// import { AuthContext } from '../utils/AuthProvider';
+// import { fetchAdminDetails } from '../slices/companySlice';
 import { showErrorToast, showSuccessToast } from '../utils/toastUtil';
 
 
@@ -55,7 +57,7 @@ SortableHeaderCell.propTypes = {
 function Employee() {
   const { id: companyId } = useParams();
   const dispatch = useDispatch();
-  const { currentUser } = useContext(AuthContext);
+  // const { currentUser } = useContext(AuthContext);
 
 
   // Data State
@@ -80,7 +82,7 @@ function Employee() {
 
   useEffect(() => {
     dispatch(fetchEmployees(companyId));
-    dispatch(fetchAdminDetails(currentUser?.email));
+    // dispatch(fetchAdminDetails(currentUser?.email));
     dispatch(fetchPlansThunk());
   }, [companyId, dispatch]);
 
@@ -185,6 +187,7 @@ function Employee() {
   const handleComparisonDialogClose = () => {
     dispatch(resetProcessedCsvData());
     setIsComparisonDialogOpen(false);
+    dispatch(fetchEmployees(companyId));
   };
 
   return (
