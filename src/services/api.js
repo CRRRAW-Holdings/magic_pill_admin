@@ -202,7 +202,7 @@ export const fetchPlans = async () => {
 
 export const uploadCSVData = async (companyId, csvData) => {
   try {
-    const url = `http://localhost:8080/bulk-upload/${companyId}`;
+    const url = `${process.env.REACT_APP_API_URL}/bulk-upload/${companyId}`;
     const response = await axios.post(url, csvData, {
       headers: {
         'Content-Type': 'application/json',
@@ -219,7 +219,7 @@ export const uploadCSVData = async (companyId, csvData) => {
 
 export const approveEmployeeChanges = async (approvedData, companyId) => {
   try {
-    const url = `http://localhost:8080/approve-employee-changes/${companyId}`;
+    const url = `${process.env.REACT_APP_API_URL}/approve-employee-changes/${companyId}`;
     const response = await axios.post(url, approvedData, {
       headers: {
         'Content-Type': 'application/json'

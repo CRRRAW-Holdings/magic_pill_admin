@@ -10,7 +10,7 @@ import { AuthContext } from '../utils/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { CircularProgress } from '@mui/material';
 
-const LoginForm = ({ email, setEmail, handleSubmit, submitted, loading }) => (
+const LoginForm = ({ email, setEmail, handleSubmit, submitted, loading, emailError }) => (
   <>
     <Typography component="h1" variant="h5">
       Sign In with Email Link
@@ -27,8 +27,8 @@ const LoginForm = ({ email, setEmail, handleSubmit, submitted, loading }) => (
         autoComplete="email"
         value={email}
         onChange={e => setEmail(e.target.value)}
-        error={submitted && !isValidEmail(email)}
-        helperText={submitted && !isValidEmail(email) ? 'Invalid Email' : ''}
+        error={submitted && (!isValidEmail(email) || emailError)}
+        helperText={submitted && (emailError || (!isValidEmail(email) ? 'Invalid Email' : ''))}
       />
       <LoginButton
         type="submit"
@@ -48,6 +48,7 @@ LoginForm.propTypes = {
   handleSubmit: PropTypes.func.isRequired,
   submitted: PropTypes.bool.isRequired,
   loading: PropTypes.bool.isRequired,
+  emailError: PropTypes.string
 };
 
 const Landing = () => {
@@ -55,6 +56,7 @@ const Landing = () => {
   const [submitted, setSubmitted] = useState(false);
   const [emailLinkSent, setEmailLinkSent] = useState(false);
   const [emailVerificationLoading, setEmailVerificationLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
   const { currentUser, currentAdmin,  loading: authLoading, checkAdminByEmail, initializationCompleted } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -63,17 +65,23 @@ const Landing = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitted(true);
-    if (!isValidEmail(email)) return;
+    if (!isValidEmail(email)) {
+      setEmailError('Invalid Email');
+      return;
+    }
+    setEmailError('');
     setEmailVerificationLoading(true);
     try {
       await checkAdminByEmail(email);
       setEmailLinkSent(true);
     } catch (error) {
+      setEmailError('Failed to verify email. Please try again.'); // Set error message on failure
       console.log(error);
     } finally {
       setEmailVerificationLoading(false);
     }
   };
+  
 
   useEffect(() => {
     if (initializationCompleted && currentUser?.uid) {
@@ -99,7 +107,7 @@ const Landing = () => {
             {emailLinkSent && !currentUser?.uid ? (
               <CheckEmail />
             ) : (
-              <LoginForm {...{ email, setEmail, handleSubmit, submitted, loading: emailVerificationLoading }} />
+              <LoginForm {...{ email, setEmail, handleSubmit, submitted, loading: emailVerificationLoading, emailError }} />
             )}
           </CardContent>
         </LoginCard>

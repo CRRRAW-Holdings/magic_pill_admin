@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error('This admin email is not registered in our system');
       }
     } catch (error) {
-      console.log(error.message);
+      throw new Error(error.message);
     }
   };
 
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
       window.localStorage.setItem('emailForSignIn', email);
     } catch (error) {
-      console.log(error.message);
+      throw new Error(error.message);
     }
   };
 
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
       const adminDetails = await fetchAdminByEmail(email);
       setCurrentAdmin(adminDetails);
     } catch (error) {
-      console.log(error.message);
+      throw new Error(error.message);
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
       setCurrentUser(null);
       setCurrentAdmin(null);
     } catch (error) {
-      console.log(error.message);
+      throw new Error(error.message);
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }) => {
           const adminDetails = await fetchAdminByEmail(user.email);
           setCurrentAdmin(adminDetails);
         } catch (error) {
-          console.log(error.message);
+          throw new Error(error.message);
         }
       } else {
         setCurrentAdmin(null);
