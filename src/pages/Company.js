@@ -25,7 +25,8 @@ import { LogoutButton } from '../styles/buttonComponents';
 
 const Company = () => {
   const dispatch = useDispatch();
-  const { currentUser, signOut } = useContext(AuthContext);
+  const { currentUser, signOut, error } = useContext(AuthContext);
+  console.log(error);
 
   const currentAdmin = useSelector(selectCurrentAdmin);
   const searchTerm = useSelector(selectSearchTerm);

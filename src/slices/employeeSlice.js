@@ -48,10 +48,10 @@ export const toggleEmployeeStatusThunk = createAsyncThunk(
 
 export const uploadCSVThunk = createAsyncThunk(
   'employee/uploadCSV',
-  async ({ companyId, parsedData }, { dispatch, rejectWithValue }) => {
+  async ({ companyId, parsedData, token }, { dispatch, rejectWithValue }) => {
     try {
-      const response = await uploadCSVData(companyId, parsedData);
-      return response.data;
+      const response = await uploadCSVData(companyId, parsedData, token);
+      return response;
     } catch (error) {
       return rejectWithValue(error.message);
     }

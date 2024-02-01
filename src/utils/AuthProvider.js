@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [currentAdmin, setCurrentAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [initializationCompleted, setInitializationCompleted] = useState(false);
+  const [error, setError] = useState(null);
 
   const checkAdminByEmail = async (email) => {
     try {
@@ -47,6 +48,7 @@ export const AuthProvider = ({ children }) => {
 
   const signInWithEmail = async (email, emailLink) => {
     setLoading(true);
+    setError(null);
     try {
       if (!email || !isSignInWithEmailLink(auth, emailLink)) {
         throw new Error('Invalid email sign-in link.');
@@ -56,7 +58,7 @@ export const AuthProvider = ({ children }) => {
       const adminDetails = await fetchAdminByEmail(email);
       setCurrentAdmin(adminDetails);
     } catch (error) {
-      throw new Error(error.message);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -72,6 +74,19 @@ export const AuthProvider = ({ children }) => {
       throw new Error(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getIdToken = async () => {
+    console.log(currentUser,'currentuser');
+    if (!currentUser) {
+      return null;
+    }
+    try {
+      return await currentUser.getIdToken(true);
+    } catch (error) {
+      setError(error.message);
+      return null;
     }
   };
 
@@ -95,7 +110,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, currentAdmin, loading, initializationCompleted, checkAdminByEmail, signInWithEmail, signOut }}>
+    <AuthContext.Provider value={{ currentUser, currentAdmin, error, loading, initializationCompleted, checkAdminByEmail, signInWithEmail, signOut, getIdToken }}>
       {children}
     </AuthContext.Provider>
   );

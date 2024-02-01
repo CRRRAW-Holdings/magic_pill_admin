@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo, 
+import React, { useEffect, useState, useRef, useMemo, useContext, 
   // useContext
 } from 'react';
 import PropTypes from 'prop-types';
@@ -32,7 +32,7 @@ import { EmployeeRow, HeaderCell, HeaderTableRow, StyledTable, StyledTableCell, 
 import { AddEmployeeButton, DisableButton, EditButton, EnableButton, UploadCSVButton } from '../styles/buttonComponents';
 import { ActionContainer, NavbarContainer } from '../styles/containerStyles';
 import { selectCurrentAdmin } from '../selectors';
-// import { AuthContext } from '../utils/AuthProvider';
+import { AuthContext } from '../utils/AuthProvider';
 // import { fetchAdminDetails } from '../slices/companySlice';
 import { showErrorToast, showSuccessToast } from '../utils/toastUtil';
 
@@ -57,7 +57,7 @@ SortableHeaderCell.propTypes = {
 function Employee() {
   const { id: companyId } = useParams();
   const dispatch = useDispatch();
-  // const { currentUser } = useContext(AuthContext);
+  const { getIdToken } = useContext(AuthContext);
 
 
   // Data State
@@ -160,26 +160,38 @@ function Employee() {
   };
 
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     e.target.value = null;
+  
+    // Retrieve the token
+    const token = await getIdToken();
+    if (!token) {
+      showErrorToast('Authentication error: Unable to retrieve token');
+      return;
+    }
+  
     processFile(
       file,
       employees,
       companies,
       plans,
       companyId,
-      (parsedData) => {
-        dispatch(uploadCSVThunk({ companyId: companyId, parsedData: parsedData })).then((action) => {
+      async (parsedData) => {
+        try {
+          // Pass the token to your thunk action
+          const action = await dispatch(uploadCSVThunk({ companyId, parsedData, token }));
           if (uploadCSVThunk.fulfilled.match(action)) {
             setIsComparisonDialogOpen(true);
-          } else if (uploadCSVThunk.rejected.match(action)) {
+          } else {
             showErrorToast('Error processing CSV!', action.payload || action.error.message);
           }
-        });
+        } catch (error) {
+          showErrorToast('Error processing CSV!', error.message);
+        }
       },
       (error) => {
-        showErrorToast('Error processing CSV!', error);
+        showErrorToast('Error processing CSV!', error.message);
       }
     );
   };

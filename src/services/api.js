@@ -16,7 +16,7 @@ export const fetchAdminByEmail = async (email) => {
     const adminsRef = collection(firestore, 'admins');
     const q = query(adminsRef, where('email', '==', email.toLowerCase()));
     const querySnapshot = await getDocs(q);
-    
+
     if (!querySnapshot.empty) {
       const adminDoc = querySnapshot.docs[0].data();
 
@@ -27,11 +27,11 @@ export const fetchAdminByEmail = async (email) => {
         const companyQuerySnapshot = await getDocs(companyQuery);
         if (!companyQuerySnapshot.empty) {
           return companyQuerySnapshot.docs[0].data();
-        } 
+        }
         return null;
       });
       const companies = await Promise.all(companyPromises);
-      
+
       // Filter out any null values in case some companies weren't found
       adminDoc.companies = companies.filter(company => company !== null);
 
@@ -92,7 +92,7 @@ export const addEmployeeToCompany = async (employeeData) => {
   try {
     const docRef = await addDoc(collection(firestore, 'employees'), { ...employeeData });
     const docSnap = await getDoc(docRef);
-    
+
     if (docSnap.exists()) {
       const employee = docSnap.data();
       let planName = '';
@@ -199,15 +199,14 @@ export const fetchPlans = async () => {
   return querySnapshot.docs.map(doc => doc.data());
 };
 
-
-export const uploadCSVData = async (companyId, csvData) => {
+export const uploadCSVData = async (companyId, csvData, token) => {
   try {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
     const url = `${process.env.REACT_APP_API_URL}/bulk-upload/${companyId}`;
-    const response = await axios.post(url, csvData, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await axios.post(url, csvData, { headers });
     return {
       status: 'success',
       data: response.data,
