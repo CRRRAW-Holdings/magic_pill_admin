@@ -51,7 +51,7 @@ export const uploadCSVThunk = createAsyncThunk(
   async ({ companyId, parsedData, token }, { dispatch, rejectWithValue }) => {
     try {
       const response = await uploadCSVData(companyId, parsedData, token);
-      return response;
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.message);
     }
