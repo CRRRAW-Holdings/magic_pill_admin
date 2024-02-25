@@ -90,6 +90,9 @@ export const fetchEmployeesFromCompany = async (companyId) => {
 
 export const addEmployeeToCompany = async (employeeData) => {
   try {
+    if(employeeData.email) {
+      employeeData.email = employeeData.email.toLowerCase();
+    }
     const docRef = await addDoc(collection(firestore, 'employees'), { ...employeeData });
     const docSnap = await getDoc(docRef);
 
@@ -118,6 +121,9 @@ export const addEmployeeToCompany = async (employeeData) => {
 
 export const updateEmployeeDetails = async (documentId, employeeData) => {
   try {
+    if(employeeData.email) {
+      employeeData.email = employeeData.email.toLowerCase();
+    }
 
     if (!documentId) {
       throw new Error('documentId is undefined or invalid');
