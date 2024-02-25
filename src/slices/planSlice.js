@@ -1,13 +1,13 @@
 // planSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchPlansFromApi } from '../services/api';
+import { fetchPlans } from '../services/api';
 
 // Async thunk to fetch plans
-export const fetchPlans = createAsyncThunk(
+export const fetchPlansThunk = createAsyncThunk(
   'plan/fetchPlans',
   async () => {
-    const response = await fetchPlansFromApi();
-    return response.data.results;
+    const response = await fetchPlans();
+    return response;
   }
 );
 
@@ -28,14 +28,14 @@ const planSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchPlans.fulfilled, (state, action) => {
+      .addCase(fetchPlansThunk.fulfilled, (state, action) => {
         state.plans = action.payload;
       })
-      .addCase(fetchPlans.rejected, (state, action) => {
+      .addCase(fetchPlansThunk.rejected, (state, action) => {
         state.hasError = true;
         state.errorMessage = 'There was an issue loading the plans. Please try again later.';
       });
-  }
+  }  
 });
 
 export default planSlice.reducer;

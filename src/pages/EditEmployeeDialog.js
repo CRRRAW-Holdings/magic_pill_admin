@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { updateEmployeeThunk } from '../slices/employeeSlice';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -12,22 +12,25 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import PropTypes from 'prop-types';
+import { CircularProgress } from '@mui/material';
 
 function EditEmployeeDialog({ open, onClose, employee, companyId, companies, plans }) {
   const dispatch = useDispatch();
   const [employeeData, setEmployeeData] = useState({
     email: '',
-    insurance_company_id: companyId,
-    magic_pill_plan_id: '',
-    is_active: true,
-    is_dependent: false,
+    companyId: companyId,
+    planId: '',
+    isActive: true,
+    isDependant: false,
     address: '',
     dob: '',
     company: '',
-    first_name: '',
-    last_name: '',
+    firstName: '',
+    lastName: '',
     phone: ''
   });
+
+  const isLoading = useSelector(state => state.employee.isLoading);
 
   useEffect(() => {
     if (employee) {
@@ -46,26 +49,10 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
   };
 
   const handleSubmit = () => {
-    const formattedDOB = employeeData.dob;
-    const username = `${employeeData.email}_${formattedDOB}_${employeeData.insurance_company_id}`;
-
-    const updatedEmployeeData = {
-      address: employeeData.address,
-      insurance_company_id: employeeData.insurance_company_id,
-      magic_pill_plan_id: employeeData.magic_pill_plan_id,
-      company: employeeData.company,
-      dob: formattedDOB,
-      email: employeeData.email,
-      first_name: employeeData.first_name,
-      is_active: employeeData.is_active,
-      is_dependent: employeeData.is_dependent,
-      last_name: employeeData.last_name,
-      phone: employeeData.phone,
-      user_id: employeeData.user_id,
-      username: username,
-    };
-
-    dispatch(updateEmployeeThunk({ companyId, employeeData: updatedEmployeeData }))
+    const { documentId, ...dataToUpdate } = employeeData;
+    dataToUpdate.planId = parseInt(dataToUpdate.planId, 10);
+  
+    dispatch(updateEmployeeThunk({ documentId, employeeData: dataToUpdate }))
       .then(action => {
         if (updateEmployeeThunk.fulfilled.match(action)) {
           onClose(action.payload);
@@ -76,7 +63,7 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
         console.error('Error updating employee:', error);
       });
   };
-
+  
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Edit Employee</DialogTitle>
@@ -93,9 +80,9 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
         <FormControlLabel
           control={
             <Checkbox
-              checked={employeeData.is_active}
+              checked={employeeData.isActive}
               onChange={handleCheckboxChange}
-              name="is_active"
+              name="isActive"
               color="primary"
             />
           }
@@ -104,9 +91,9 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
         <FormControlLabel
           control={
             <Checkbox
-              checked={employeeData.is_dependent}
+              checked={employeeData.isDependant}
               onChange={handleCheckboxChange}
-              name="is_dependent"
+              name="isDependant"
               color="primary"
             />
           }
@@ -134,11 +121,11 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
           onChange={handleChange}
         />
         <Select
-          value={employeeData.insurance_company_id}
+          value={employeeData.companyId}
           onChange={handleChange}
           displayEmpty
           fullWidth
-          name="insurance_company_id"
+          name="companyId"
           margin="dense"
           disabled
         >
@@ -146,45 +133,45 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
             <em>Select a company</em>
           </MenuItem>
           {companies.map(company => (
-            <MenuItem key={company.insurance_company_id} value={company.insurance_company_id}>
-              {company.insurance_company_name}
+            <MenuItem key={company.companyId} value={company.companyId}>
+              {company.name}
             </MenuItem>
           ))}
         </Select>
 
         <Select
-          value={employeeData.magic_pill_plan_id}
+          value={employeeData.planId}
           onChange={handleChange}
           displayEmpty
           fullWidth
-          name="magic_pill_plan_id"
+          name="planId"
           margin="dense"
         >
           <MenuItem disabled value="">
             <em>Select a plan</em>
           </MenuItem>
           {plans.map(plan => (
-            <MenuItem key={plan.magic_pill_plan_id} value={plan.magic_pill_plan_id}>
-              {plan.plan_name}
+            <MenuItem key={plan.planId} value={plan.planId}>
+              {plan.name}
             </MenuItem>
           ))}
         </Select>
         <TextField
           margin="dense"
-          name="first_name"
+          name="firstName"
           label="First Name"
           type="text"
           fullWidth
-          value={employeeData.first_name}
+          value={employeeData.firstName}
           onChange={handleChange}
         />
         <TextField
           margin="dense"
-          name="last_name"
+          name="lastName"
           label="Last Name"
           type="text"
           fullWidth
-          value={employeeData.last_name}
+          value={employeeData.lastName}
           onChange={handleChange}
         />
         <TextField
@@ -198,13 +185,17 @@ function EditEmployeeDialog({ open, onClose, employee, companyId, companies, pla
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="primary">
+        {isLoading && (
+          <CircularProgress size={24} />
+        )}
+        <Button onClick={onClose} color="primary" disabled={isLoading}>
           Cancel
         </Button>
-        <Button onClick={handleSubmit} color="primary">
-          Update
+        <Button onClick={handleSubmit} color="primary" disabled={isLoading}>
+          {isLoading ? 'Updating...' : 'Update'}
         </Button>
       </DialogActions>
+
     </Dialog>
   );
 }
@@ -215,15 +206,15 @@ EditEmployeeDialog.propTypes = {
   companyId: PropTypes.string.isRequired,
   companies: PropTypes.arrayOf(
     PropTypes.shape({
-      insurance_company_id: PropTypes.number.isRequired,
-      insurance_company_name: PropTypes.string.isRequired,
-      insurance_company_phone_number: PropTypes.string
+      companyId: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+      phoneNumber: PropTypes.string
     })
   ).isRequired,
   plans: PropTypes.arrayOf(
     PropTypes.shape({
-      magic_pill_plan_id: PropTypes.number.isRequired,
-      plan_name: PropTypes.string.isRequired,
+      planId: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
     })
   ).isRequired,
   onClose: PropTypes.func.isRequired,

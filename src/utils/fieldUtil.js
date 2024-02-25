@@ -1,4 +1,4 @@
-export const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+export const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(email);
 
 export const formatDateToYYYYMMDD = (dateString) => {
   const date = new Date(dateString);
@@ -7,4 +7,10 @@ export const formatDateToYYYYMMDD = (dateString) => {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+};
+
+
+export const formatPhoneNumber = (phoneNumber) => {
+
+  
 };

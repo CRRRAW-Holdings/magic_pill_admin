@@ -72,6 +72,7 @@ export const StyledPaper = styled(Paper)(({ theme }) => ({
   backgroundSize: 'cover',
   backgroundRepeat: 'no-repeat',
   backgroundPosition: 'center',
+  
 }));
 
 // 6. Tooltips

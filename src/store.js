@@ -3,7 +3,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import companySlice from './slices/companySlice';
 import employeeSlice from './slices/employeeSlice';
-import authSlice from './slices/authSlice';
 import planSlice from './slices/planSlice';
 
 
@@ -13,7 +12,6 @@ const loggerMiddleware = store => next => action => {
 
 const store = configureStore({
   reducer: {
-    auth: authSlice,
     company: companySlice,
     employee: employeeSlice,
     plan: planSlice,
@@ -22,7 +20,6 @@ const store = configureStore({
 });
 
 store.subscribe(() => {
-  // console.log(store.getState());
 });
 
 

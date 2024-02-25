@@ -1,20 +1,20 @@
 // companySlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { fetchCompaniesFromApi } from '../services/api';
+import { fetchAdminByEmail } from '../services/api';
 
-// Async thunk to fetch companies
-export const fetchCompanies = createAsyncThunk(
-  'company/fetchCompanies',
-  async () => {
-    const response = await fetchCompaniesFromApi();
-    return response.data.results;
+// Async thunk to fetch admin details by email
+export const fetchAdminDetails = createAsyncThunk(
+  'admin/fetchAdminDetails',
+  async (email) => {
+    const response = await fetchAdminByEmail(email);
+    return response;
   }
 );
 
 const companySlice = createSlice({
-  name: 'company',
+  name: 'admin',
   initialState: {
-    companies: [],
+    currentAdmin: null,
     searchTerm: '',
     hasError: false,
     errorMessage: '',
@@ -32,12 +32,12 @@ const companySlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchCompanies.fulfilled, (state, action) => {
-        state.companies = action.payload;
+      .addCase(fetchAdminDetails.fulfilled, (state, action) => {
+        state.currentAdmin = action.payload;
       })
-      .addCase(fetchCompanies.rejected, (state, action) => {
+      .addCase(fetchAdminDetails.rejected, (state, action) => {
         state.hasError = true;
-        state.errorMessage = action.error.message || 'There was an issue loading the companies. Please try again later.';
+        state.errorMessage = action.error.message || 'There was an issue loading the admin details. Please try again later.';
       });      
   }
 });

@@ -7,87 +7,87 @@ Base = declarative_base()
 class InsuranceCompany(Base):
     __tablename__ = 'insurance_companies'
 
-    insurance_company_id = Column(Integer, primary_key=True)
-    insurance_company_name = Column(String)
-    insurance_company_phone_number = Column(String)
+    companyId = Column(Integer, primary_key=True)
+    name = Column(String)
+    phoneNumber = Column(String)
 
     def serialize(self):
         return {
-            'insurance_company_id': self.insurance_company_id,
-            'insurance_company_name': self.insurance_company_name,
-            'insurance_company_phone_number': self.insurance_company_phone_number,
+            'companyId': self.companyId,
+            'name': self.name,
+            'phoneNumber': self.phoneNumber,
         }
 
 class User(Base):
     __tablename__ = 'users'
 
-    user_id = Column(Integer, primary_key=True)
+    documentId = Column(Integer, primary_key=True)
     username = Column(String)
     email = Column(String, unique=True)
-    first_name = Column(String)
-    last_name = Column(String)
+    firstName = Column(String)
+    lastName = Column(String)
     phone = Column(String)
     address = Column(Text)
     dob = Column(Date)
     age = Column(Integer)
     company = Column(String)
-    insurance_company_id = Column(Integer, ForeignKey('insurance_companies.insurance_company_id'))
-    magic_pill_plan_id = Column(Integer, ForeignKey('magic_pill_plans.magic_pill_plan_id'))
-    is_active = Column(Boolean)
-    is_dependent = Column(Boolean)
+    companyId = Column(Integer, ForeignKey('insurance_companies.companyId'))
+    planId = Column(Integer, ForeignKey('magic_pill_plans.planId'))
+    isActive = Column(Boolean)
+    isDependant = Column(Boolean)
 
     insurance_company = relationship("InsuranceCompany", backref="users")
     magic_pill_plan = relationship("MagicPillPlan", backref="users")
 
     def serialize(self):
         return {
-            'user_id': self.user_id,
+            'documentId': self.documentId,
             'username': self.username,
             'email': self.email,
             'address': self.address,
             'dob': self.dob,
             'age': self.age,
             'company': self.company,
-            'insurance_company_id': self.insurance_company_id,
-            'magic_pill_plan_id': self.magic_pill_plan_id,
-            'is_active': self.is_active,
+            'companyId': self.companyId,
+            'planId': self.planId,
+            'isActive': self.isActive,
             'phone': self.phone,
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-	    'is_dependent': self.is_dependent,
+            'firstName': self.firstName,
+            'lastName': self.lastName,
+	    'isDependant': self.isDependant,
         }
 
     def serialize_full(self):
         return {
-            'user_id': self.user_id,
+            'documentId': self.documentId,
             'username': self.username,
             'email': self.email,
             'address': self.address,
             'dob': self.dob,
             'age': self.age,
             'company': self.company,
-            'insurance_company_id': self.insurance_company_id,
-            'magic_pill_plan_id': self.magic_pill_plan_id,
-            'is_active': self.is_active,
+            'companyId': self.companyId,
+            'planId': self.planId,
+            'isActive': self.isActive,
             'phone': self.phone,
-            'first_name': self.first_name,
-            'last_name': self.last_name,
+            'firstName': self.firstName,
+            'lastName': self.lastName,
             'insurance_company': self.insurance_company.serialize(),
             'magic_pill_plan': self.magic_pill_plan.serialize(),
-	    'is_dependent': self.is_dependent,
+	    'isDependant': self.isDependant,
         }
 
 class MagicPillPlan(Base):
     __tablename__ = 'magic_pill_plans'
 
-    magic_pill_plan_id = Column(Integer, primary_key=True)
-    plan_name = Column(String)
+    planId = Column(Integer, primary_key=True)
+    planName = Column(String)
     plan_details = Column(Text)
 
     def serialize(self):
         return {
-            'magic_pill_plan_id': self.magic_pill_plan_id,
-            'plan_name': self.plan_name,
+            'planId': self.planId,
+            'planName': self.planName,
             'plan_details': self.plan_details,
         }
 
@@ -97,14 +97,14 @@ class Admin(Base):
     admin_id = Column(Integer, primary_key=True)
     admin_username = Column(String)
     admin_email = Column(String, unique=True)
-    insurance_company_id = Column(Integer, ForeignKey('insurance_companies.insurance_company_id'))
+    companyId = Column(Integer, ForeignKey('insurance_companies.companyId'))
 
     def serialize(self):
         return {
             'admin_id': self.admin_id,
             'admin_username': self.admin_username,
             'admin_email': self.admin_email,
-            'insurance_company_id': self.insurance_company_id,
+            'companyId': self.companyId,
         }
 
 class Drug(Base):

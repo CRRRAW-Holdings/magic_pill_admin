@@ -38,8 +38,7 @@ const CompanyCard = styled(Card)`
   transition: transform 0.2s;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
-  background-color: rgba(255, 255, 255, 0.1);
-  
+  background-color: rgba(255, 255, 255, 0.935); // This will be the default appearance making it light.
   &:hover {
     transform: scale(1.1);
   }

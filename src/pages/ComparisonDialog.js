@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { useDispatch } from 'react-redux';
-import { uploadCSVThunk } from '../slices/employeeSlice';
+import { useDispatch, useSelector } from 'react-redux';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
+  CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Tabs, Tab
 } from '@mui/material';
 import theme from '../theme';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import PersonOffIcon from '@mui/icons-material/PersonOff';
 import UserTable from './UserTable';
-import { toast } from 'react-toastify';
+import { approveEmployeeChangesThunk } from '../slices/employeeSlice';
+import { showErrorToast, showInfoToast, showSuccessToast } from '../utils/toastUtil';
 
 const dialogContentStyle = {
   height: '600px',
@@ -20,81 +19,87 @@ const dialogContentStyle = {
 
 const dialogHeaderStyle = {
   display: 'flex',
-  justifyContent: 'space-between', // Or 'center' if you prefer
+  justifyContent: 'space-between',
   alignItems: 'center',
 };
 
+const columnToTitleMapping = {
+  email: 'Email',
+  planName: 'Plan Name',
+  isActive: 'Is Active',
+  address: 'Address',
+  dob: 'Date of Birth',
+  age: 'Age',
+  company: 'Company',
+  firstName: 'First Name',
+  lastName: 'Last Name',
+  phone: 'Phone',
+};
+
 const addTabColumns = [
-  'email', 'plan_name', 'is_active',
-  'address', 'dob', 'age', 'company', 'first_name', 'last_name', 'phone'
+  'email', 'planName', 'isActive',
+  'address', 'dob', 'company', 'firstName', 'lastName',
 ];
 
 const updateTabColumns = addTabColumns;
 
-const disableTabColumns = ['email', 'dob', 'username'];
-
-const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companies, plans }) => {
+const ComparisonDialog = ({ open, onClose, employeeChanges, companyId }) => {
   const dispatch = useDispatch();
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [checkedItems, setCheckedItems] = useState([]);
-  const [selectAll, setSelectAll] = useState({ added: false, edited: false, disabled: false });
 
-  const added = processedCsvData.filter(data => data.action === 'add');
-  const edited = processedCsvData.filter(data => data.action === 'update');
-  const disabled = processedCsvData.filter(data => data.action === 'toggle');
-  const tabStyle = (index) => {
-    switch (index) {
-    case 0:
-      return { backgroundColor: selectedTab === 0 ? theme.palette.primary.main : 'transparent', color: selectedTab === 0 ? 'white' : theme.palette.success.dark };
-    case 1:
-      return { backgroundColor: selectedTab === 1 ? theme.palette.primary.main : 'transparent', color: selectedTab === 1 ? 'white' : 'orange' };
-    case 2:
-      return { backgroundColor: selectedTab === 2 ? theme.palette.primary.main : 'transparent', color: selectedTab === 2 ? 'white' : theme.palette.error.dark };
-    default:
-      return {};
-    }
-  };
+  const [selectedTab, setSelectedTab] = useState(0);
+  const isLoading = useSelector(state => state.employee.uploadProgress.isLoading);
+
+  const added = employeeChanges.adds || [];
+  const edited = employeeChanges.edits || [];
+  const editedForDisplay = edited.map(edit => {
+    const displayChanges = Object.entries(edit.changes).map(([key, { oldValue, newValue }]) => ({
+      field: key,
+      change: `${oldValue} → ${newValue}`
+    }));
+    return { ...edit, changes: displayChanges };
+  });
+
+  const tabStyle = (index) => ({
+    backgroundColor: selectedTab === index ? theme.palette.primary.main : 'transparent',
+    color: selectedTab === index ? 'white' : theme.palette.text.primary
+  });
 
   const handleApprove = () => {
-    const dataToUpload = [...added, ...edited, ...disabled].filter(item => checkedItems.includes(item.user_data.username));
-    dispatch(uploadCSVThunk(dataToUpload))
-      .then((action) => {
-        if (action.type === 'employee/uploadCSV/fulfilled') {
-          toast.success('Successful Upload!');
-          onClose();
-        } else {
-          toast.error('Failed Upload');
-        }
+    const processedAdded = added;
+
+    const processedEdited = edited.map(edit => ({
+      ...edit.updatedObject,
+      documentId: edit.id
+    }));
+
+    const approvedData = {
+      added: processedAdded,
+      edited: processedEdited,
+    };
+
+    dispatch(approveEmployeeChangesThunk({ approvedData, companyId }))
+      .then(() => {
+        showSuccessToast('Changes Approved and Sent to Database');
+        onClose(); 
+      })
+      .catch((error) => {
+        showErrorToast('Error approving changes: ' + error);
       });
   };
-
+  
   const handleDecline = () => {
-    toast.info('File Upload was Declined');
+    showInfoToast('File Upload was Declined');
     onClose();
   };
 
   const handleCancel = () => {
-    toast.info('File Upload was Cancelled');
+    showInfoToast('File Upload was Cancelled');
     onClose();
   };
 
-
-  const handleSelectAll = (tab) => {
-    let items = [];
-    if (tab === 'added') items = added;
-    else if (tab === 'edited') items = edited;
-    else if (tab === 'disabled') items = disabled;
-
-    if (selectAll[tab]) {
-      setCheckedItems(prevCheckedItems => prevCheckedItems.filter(id => !items.map(user => user.user_data.username).includes(id)));
-    } else {
-      setCheckedItems(prevCheckedItems => [...new Set([...prevCheckedItems, ...items.map(user => user.user_data.username)])]);
-    }
-    setSelectAll(prevSelectAll => ({ ...prevSelectAll, [tab]: !prevSelectAll[tab] }));
-  };
   return (
     <Dialog open={open} onClose={handleCancel} fullWidth maxWidth="lg">
-      <DialogTitle disableTypography>
+      <DialogTitle>
         <div style={dialogHeaderStyle}>
           <div style={{ flex: 1, textAlign: 'left', fontWeight: 'bold', fontSize: '1.25rem', color: theme.palette.text.primary }}>
             Data Changes Review
@@ -108,7 +113,6 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
           >
             <Tab label="Added" style={tabStyle(0)} />
             <Tab label="Edited" style={tabStyle(1)} />
-            <Tab label="Disabled" style={tabStyle(2)} />
           </Tabs>
           <div style={{ flex: 1 }} />
         </div>
@@ -119,44 +123,34 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
             type="added"
             columns={addTabColumns}
             users={added}
-            handleSelectAll={handleSelectAll}
-            selectAll={selectAll}
             IconComponent={AddIcon}
-          // backgroundColor={theme.palette.success.light}
+            columnMapping={columnToTitleMapping}
           />
         )}
         {selectedTab === 1 && (
           <UserTable
             type="edited"
             columns={updateTabColumns}
-            users={edited}
-            handleSelectAll={handleSelectAll}
-            selectAll={selectAll}
+            users={editedForDisplay}
             IconComponent={EditIcon}
-          // backgroundColor={theme.palette.warning.main}
-          />
-        )}
-        {selectedTab === 2 && (
-          <UserTable
-            type="disabled"
-            columns={disableTabColumns}
-            users={disabled}
-            handleSelectAll={handleSelectAll}
-            selectAll={selectAll}
-            IconComponent={PersonOffIcon}
-          // backgroundColor={theme.palette.error.dark}
+            columnMapping={columnToTitleMapping}
           />
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleDecline} color="primary">
+        {isLoading && (
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+            <CircularProgress />
+          </div>
+        )}
+        <Button onClick={handleDecline} color="primary" disabled={isLoading}>
           Decline Changes
         </Button>
         <Button
           onClick={handleApprove}
           color="primary"
           variant="contained"
-          disabled={checkedItems.length !== (added.length + edited.length + disabled.length)}
+          disabled={isLoading}
         >
           Approve Changes
         </Button>
@@ -168,21 +162,13 @@ const ComparisonDialog = ({ open, onClose, processedCsvData, companyId, companie
 ComparisonDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  processedCsvData: PropTypes.arrayOf(PropTypes.object).isRequired,
+  employeeChanges: PropTypes.shape({
+    adds: PropTypes.arrayOf(PropTypes.object),
+    edits: PropTypes.arrayOf(PropTypes.object),
+  }).isRequired,
   companyId: PropTypes.string.isRequired,
-  companies: PropTypes.arrayOf(
-    PropTypes.shape({
-      insurance_company_id: PropTypes.number.isRequired,
-      insurance_company_name: PropTypes.string.isRequired,
-      insurance_company_phone_number: PropTypes.string
-    })
-  ).isRequired,
-  plans: PropTypes.arrayOf(
-    PropTypes.shape({
-      magic_pill_plan_id: PropTypes.number.isRequired,
-      plan_name: PropTypes.string.isRequired,
-    })
-  ).isRequired,
+  companies: PropTypes.arrayOf(PropTypes.object).isRequired,
+  plans: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
 export default ComparisonDialog;

@@ -6,29 +6,48 @@ import {
 import { commonButtonStyles } from '../theme';
 
 
-export const EditButton = styled(Button)(({ theme }) => ({
-  ...commonButtonStyles,  // spread the common styles
-  backgroundColor: theme.palette.primary.light,
+const sharedButtonStyles = {
+  fontSize: '16px',
+  padding: '12px 30px',
+  width: '200px',
+  minHeight: '48px',
+  textTransform: 'uppercase',
+  boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+  borderRadius: '8px',
   '&:hover': {
-    backgroundColor: theme.palette.primary.main,
+    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
   },
-}));
+};
 
 export const AddEmployeeButton = styled(Button)(({ theme }) => ({
+  ...sharedButtonStyles,
   backgroundColor: theme.palette.success.dark,
-  fontSize: '1rem',
-  padding: '10px 20px',
-  minWidth: '100px',
+  '&:hover': {
+    backgroundColor: theme.palette.success.light,
+  },
   [theme.breakpoints.down('sm')]: {
     width: 'calc(85% - 10px)',
     marginRight: '10px',
   },
-  borderRadius: '8px',
-  textTransform: 'uppercase',
-  boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+}));
+
+export const UploadCSVButton = styled(Button)(({ theme }) => ({
+  ...sharedButtonStyles,
+  backgroundColor: theme.palette.primary.light,
+  color: theme.palette.primary.contrastText,
   '&:hover': {
-    backgroundColor: theme.palette.success.light,
-    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
+    backgroundColor: theme.palette.primary.main,
+  },
+  [theme.breakpoints.down('sm')]: {
+    width: 'calc(85% - 10px)',
+  },
+}));
+
+export const EditButton = styled(Button)(({ theme }) => ({
+  ...commonButtonStyles,
+  backgroundColor: theme.palette.primary.light,
+  '&:hover': {
+    backgroundColor: theme.palette.primary.main,
   },
 }));
 
@@ -54,32 +73,26 @@ export const EnableButton = styled(Button)(({ theme }) => ({
   marginLeft: '20px'
 }));
 
-export const UploadCSVButton = styled(Button)(({ theme }) => ({
-  variant: 'contained',
-  backgroundColor: theme.palette.primary.light,
-  color: theme.palette.primary.contrastText,
-  fontSize: '16px',
-  padding: '12px 30px',
-  minWidth: '150px',
-  [theme.breakpoints.down('sm')]: {  // On extra small screens
-    width: 'calc(85% - 10px)',   // Take up half the space minus a little for margin
-  },
-  borderRadius: '8px',
-  textTransform: 'uppercase',
-  boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-
-  '&:hover': {
-    backgroundColor: theme.palette.primary.main,
-    boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
-  },
-}));
-
 export const BulkEditButton = styled(Button)(({ theme }) => ({
   backgroundColor: theme.palette.primary.light,
   color: theme.palette.primary.contrastText,
   '&:hover': {
     backgroundColor: theme.palette.primary.main,
   },
+}));
+
+export const LogoutButton = styled(Button)(({ theme }) => ({
+  ...commonButtonStyles,  // spread the common styles
+  color: theme.palette.common.white,
+  backgroundColor: theme.palette.rusticRedwood.light,
+  '&:hover': {
+    backgroundColor: theme.palette.rusticRedwood.main,
+  },
+  textAlign: 'justify',
+  marginLeft: '20px',
+  position: 'absolute',  // Positions the button based on the closest relative/absolute/fixed parent (Wrapper in this case)
+  top: '30px', 
+  right: '30px',
 }));
 
 // 4. Form Elements

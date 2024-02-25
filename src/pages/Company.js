@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Wrapper,
@@ -12,36 +12,35 @@ import {
   ErrorMessage
 } from '../styles/companyComponents';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSearchTerm, fetchCompanies } from '../slices/companySlice';
-import { getAdminByEmail } from '../slices/authSlice';
+import { setSearchTerm, fetchAdminDetails } from '../slices/companySlice';
 import {
+  selectCurrentAdmin,
   selectSearchTerm,
   selectHasError,
   selectErrorMessage,
-  selectFilteredCompanies
 } from '../selectors';
 import { CardContent } from '@mui/material';
+import { AuthContext } from '../utils/AuthProvider';
+import { LogoutButton } from '../styles/buttonComponents';
 
 const Company = () => {
   const dispatch = useDispatch();
-  
+  const { currentUser, signOut, error } = useContext(AuthContext);
+  console.log(error);
+
+  const currentAdmin = useSelector(selectCurrentAdmin);
   const searchTerm = useSelector(selectSearchTerm);
   const hasError = useSelector(selectHasError);
   const errorMessage = useSelector(selectErrorMessage);
 
   useEffect(() => {
-    dispatch(fetchCompanies());
-  
-    // Fetch admin data
-    const email = window.localStorage.getItem('emailForSignIn');
-    if (email) {
-      dispatch(getAdminByEmail(email));
-    }
+    dispatch(fetchAdminDetails(currentUser.email));
+
   }, [dispatch]);  
-  
 
-
-  const filteredCompanies = useSelector(selectFilteredCompanies);
+  const filteredCompanies = currentAdmin?.companies?.filter(company =>
+    company.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
     <Wrapper>
@@ -49,6 +48,9 @@ const Company = () => {
         <Title variant="h4" component="h1" gutterBottom>
           Select Company
         </Title>
+        <LogoutButton variant="contained" color="secondary" onClick={signOut}>
+          Logout
+        </LogoutButton>
         <SearchBar
           type="text"
           placeholder="Search for a company..."
@@ -63,15 +65,15 @@ const Company = () => {
         <CompanyList>
           {filteredCompanies.map((company) => (
             <RouterLink
-              to={`/company/${company.insurance_company_id}`}
+              to={`/company/${company.companyId}`}
               style={{ textDecoration: 'none' }}
-              key={company.insurance_company_id}
+              key={company.companyId}
             >
               <CompanyCard>
                 <CardContent>
                   <CardContainer>
                     <CompanyLink>
-                      {company.insurance_company_name}
+                      {company.name}
                     </CompanyLink>
                   </CardContainer>
                 </CardContent>
