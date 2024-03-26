@@ -48,7 +48,7 @@ export const toggleEmployeeStatusThunk = createAsyncThunk(
 
 export const uploadCSVThunk = createAsyncThunk(
   'employee/uploadCSV',
-  async ({ companyId, parsedData, token }, { dispatch, rejectWithValue }) => {
+  async ({ companyId, parsedData, token }, {  rejectWithValue }) => {
     try {
       const response = await uploadCSVData(companyId, parsedData, token);
       return response.data;
@@ -60,9 +60,9 @@ export const uploadCSVThunk = createAsyncThunk(
 
 export const approveEmployeeChangesThunk = createAsyncThunk(
   'employee/approveEmployeeChanges',
-  async ({ approvedData, companyId }, { rejectWithValue }) => {
+  async ({ approvedData, companyId, token }, { rejectWithValue }) => {
     try {
-      const response = await approveEmployeeChanges(approvedData, companyId);
+      const response = await approveEmployeeChanges(approvedData, companyId, token);
       return response;
     } catch (error) {
       return rejectWithValue(error.message);

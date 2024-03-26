@@ -222,12 +222,13 @@ export const uploadCSVData = async (companyId, csvData, token) => {
   }
 };
 
-export const approveEmployeeChanges = async (approvedData, companyId) => {
+export const approveEmployeeChanges = async (approvedData, companyId, token) => {
   try {
     const url = `${process.env.REACT_APP_API_URL}/approve-employee-changes/${companyId}`;
     const response = await axios.post(url, approvedData, {
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       }
     });
     if (response.status === 200) {

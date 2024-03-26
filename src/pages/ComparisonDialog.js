@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState} from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -11,6 +11,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import UserTable from './UserTable';
 import { approveEmployeeChangesThunk } from '../slices/employeeSlice';
 import { showErrorToast, showInfoToast, showSuccessToast } from '../utils/toastUtil';
+import { AuthContext } from '../utils/AuthProvider';
 
 const dialogContentStyle = {
   height: '600px',
@@ -45,6 +46,7 @@ const updateTabColumns = addTabColumns;
 
 const ComparisonDialog = ({ open, onClose, employeeChanges, companyId }) => {
   const dispatch = useDispatch();
+  const { getIdToken } = useContext(AuthContext);
 
   const [selectedTab, setSelectedTab] = useState(0);
   const isLoading = useSelector(state => state.employee.uploadProgress.isLoading);
@@ -64,27 +66,30 @@ const ComparisonDialog = ({ open, onClose, employeeChanges, companyId }) => {
     color: selectedTab === index ? 'white' : theme.palette.text.primary
   });
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
+    const token = await getIdToken();
+    if (!token) {
+      showErrorToast('Authentication error: Unable to retrieve token');
+      return;
+    }
     const processedAdded = added;
-
     const processedEdited = edited.map(edit => ({
       ...edit.updatedObject,
       documentId: edit.id
     }));
-
+  
     const approvedData = {
       added: processedAdded,
       edited: processedEdited,
     };
 
-    dispatch(approveEmployeeChangesThunk({ approvedData, companyId }))
-      .then(() => {
-        showSuccessToast('Changes Approved and Sent to Database');
-        onClose(); 
-      })
-      .catch((error) => {
-        showErrorToast('Error approving changes: ' + error);
-      });
+    const actionResult = await dispatch(approveEmployeeChangesThunk({ approvedData, companyId, token }));
+    if (approveEmployeeChangesThunk.fulfilled.match(actionResult)) {
+      showSuccessToast('Changes Approved and Sent to Database');
+      onClose();
+    } else {
+      showErrorToast('Error approving changes: ' + (actionResult.payload || actionResult.error.message));
+    }
   };
   
   const handleDecline = () => {
