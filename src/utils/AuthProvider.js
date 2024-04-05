@@ -1,12 +1,7 @@
 import PropTypes from 'prop-types';
 import React, { createContext, useEffect, useState } from 'react';
 import { firebaseAuth } from '../services/authfirebase';
-import {
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
-  signOut as firebaseSignOut
-} from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
 import { fetchAdminByEmail } from '../services/api';
 
 const auth = firebaseAuth;
@@ -19,41 +14,12 @@ export const AuthProvider = ({ children }) => {
   const [initializationCompleted, setInitializationCompleted] = useState(false);
   const [error, setError] = useState(null);
 
-  const checkAdminByEmail = async (email) => {
+  // Function to handle signing in with email and password
+  const signInWithEmailAndPasswordHandler = async (email, password) => {
     try {
-      const response = await fetchAdminByEmail(email.toLowerCase());
-      if (response.email) {
-        await sendSignInLink(email);
-        return response;
-      } else {
-        throw new Error('This admin email is not registered in our system');
-      }
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  };
-
-  const sendSignInLink = async (email) => {
-    try {
-      const actionCodeSettings = {
-        url: `${process.env.REACT_APP_BASE_URL}/signin-with-email`,
-        handleCodeInApp: true,
-      };
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      window.localStorage.setItem('emailForSignIn', email);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  };
-
-  const signInWithEmail = async (email, emailLink) => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (!email || !isSignInWithEmailLink(auth, emailLink)) {
-        throw new Error('Invalid email sign-in link.');
-      }
-      const result = await signInWithEmailLink(auth, email, emailLink);
+      setLoading(true);
+      setError(null);
+      const result = await signInWithEmailAndPassword(auth, email, password);
       setCurrentUser(result.user);
       const adminDetails = await fetchAdminByEmail(email);
       setCurrentAdmin(adminDetails);
@@ -64,6 +30,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Function to handle signing out
   const signOut = async () => {
     setLoading(true);
     try {
@@ -71,22 +38,9 @@ export const AuthProvider = ({ children }) => {
       setCurrentUser(null);
       setCurrentAdmin(null);
     } catch (error) {
-      throw new Error(error.message);
+      setError(error.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getIdToken = async () => {
-    console.log(currentUser,'currentuser');
-    if (!currentUser) {
-      return null;
-    }
-    try {
-      return await currentUser.getIdToken(true);
-    } catch (error) {
-      setError(error.message);
-      return null;
     }
   };
 
@@ -98,7 +52,7 @@ export const AuthProvider = ({ children }) => {
           const adminDetails = await fetchAdminByEmail(user.email);
           setCurrentAdmin(adminDetails);
         } catch (error) {
-          throw new Error(error.message);
+          setError(error.message);
         }
       } else {
         setCurrentAdmin(null);
@@ -106,13 +60,22 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       setInitializationCompleted(true);
     });
+
     return () => unsubscribe();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser, currentAdmin, error, loading, initializationCompleted, checkAdminByEmail, signInWithEmail, signOut, getIdToken }}>
-      {children}
-    </AuthContext.Provider>
+      <AuthContext.Provider value={{
+        currentUser,
+        currentAdmin,
+        error,
+        loading,
+        initializationCompleted,
+        signInWithEmailAndPassword: signInWithEmailAndPasswordHandler,
+        signOut,
+      }}>
+        {children}
+      </AuthContext.Provider>
   );
 };
 
