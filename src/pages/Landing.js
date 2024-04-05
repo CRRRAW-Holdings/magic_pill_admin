@@ -1,12 +1,12 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, {useContext, useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
-import { CircularProgress, Link } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../utils/AuthProvider'; // Ensure this path matches where AuthProvider is located
-import { isValidEmail } from '../utils/fieldUtil';
-import { FormField, LoginButton, Wrapper, Content, LoginCard, Logo } from '../styles/styledLanding';
+import {CircularProgress, Link} from '@mui/material';
+import {useNavigate} from 'react-router-dom';
+import {AuthContext} from '../utils/AuthProvider'; // Ensure this path matches where AuthProvider is located
+import {isValidEmail} from '../utils/fieldUtil';
+import {FormField, LoginButton, Wrapper, Content, LoginCard, Logo} from '../styles/styledLanding';
 import logo from '../assets/images/logochandan2.png';
 
 const LoginForm = ({
@@ -53,7 +53,7 @@ const LoginForm = ({
                 onChange={(e) => setPassword(e.target.value)}
             />
             {submitted && authError && (
-                <Typography color="error" style={{ marginTop: 8 }}>
+                <Typography color="error" style={{marginTop: 8}}>
                     {authError}
                 </Typography>
             )}
@@ -65,7 +65,7 @@ const LoginForm = ({
             >
                 {loading ? 'Logging in...' : 'Sign In'}
             </LoginButton>
-            <Typography align="center" style={{ marginTop: 16 }}>
+            <Typography align="center" style={{marginTop: 16}}>
                 <Link
                     component="button"
                     variant="body2"
@@ -133,8 +133,8 @@ const Landing = () => {
 
     if (!initializationCompleted || authLoading) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <CircularProgress />
+            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+                <CircularProgress/>
             </div>
         );
     }
@@ -144,7 +144,7 @@ const Landing = () => {
             <Content>
                 <LoginCard>
                     <CardContent>
-                        <Logo src={logo} alt="Logo" />
+                        <Logo src={logo} alt="Logo"/>
                         <LoginForm
                             email={email}
                             setEmail={setEmail}
