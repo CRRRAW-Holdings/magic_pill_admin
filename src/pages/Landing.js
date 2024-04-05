@@ -1,12 +1,12 @@
-import React, {useContext, useState, useEffect} from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@mui/material/Typography';
 import CardContent from '@mui/material/CardContent';
-import {CircularProgress} from '@mui/material';
-import {useNavigate} from 'react-router-dom';
-import {AuthContext} from '../utils/AuthProvider'; // Ensure this path matches where AuthProvider is located
-import {isValidEmail} from '../utils/fieldUtil';
-import {FormField, LoginButton, Wrapper, Content, LoginCard, Logo} from '../styles/styledLanding';
+import { CircularProgress, Link } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../utils/AuthProvider'; // Ensure this path matches where AuthProvider is located
+import { isValidEmail } from '../utils/fieldUtil';
+import { FormField, LoginButton, Wrapper, Content, LoginCard, Logo } from '../styles/styledLanding';
 import logo from '../assets/images/logochandan2.png';
 
 const LoginForm = ({
@@ -17,7 +17,8 @@ const LoginForm = ({
                        handleSubmit,
                        submitted,
                        loading,
-                       authError, // Rename this prop to match the error coming from AuthContext
+                       authError,
+                       onForgotPassword, // Include the onForgotPassword function
                    }) => (
     <>
         <Typography component="h1" variant="h5">
@@ -52,7 +53,7 @@ const LoginForm = ({
                 onChange={(e) => setPassword(e.target.value)}
             />
             {submitted && authError && (
-                <Typography color="error" style={{marginTop: 8}}>
+                <Typography color="error" style={{ marginTop: 8 }}>
                     {authError}
                 </Typography>
             )}
@@ -64,6 +65,15 @@ const LoginForm = ({
             >
                 {loading ? 'Logging in...' : 'Sign In'}
             </LoginButton>
+            <Typography align="center" style={{ marginTop: 16 }}>
+                <Link
+                    component="button"
+                    variant="body2"
+                    onClick={onForgotPassword} // Call the onForgotPassword function when clicked
+                >
+                    Forgot Password?
+                </Link>
+            </Typography>
         </form>
     </>
 );
@@ -76,7 +86,8 @@ LoginForm.propTypes = {
     handleSubmit: PropTypes.func.isRequired,
     submitted: PropTypes.bool.isRequired,
     loading: PropTypes.bool.isRequired,
-    authError: PropTypes.string, // Update the propType definition
+    authError: PropTypes.string,
+    onForgotPassword: PropTypes.func.isRequired, // Add propType for onForgotPassword
 };
 
 const Landing = () => {
@@ -88,7 +99,8 @@ const Landing = () => {
         loading: authLoading,
         currentUser,
         initializationCompleted,
-        error: authError
+        error: authError,
+        resetPassword, // Destructure the resetPassword function from AuthContext
     } = useContext(AuthContext);
     const navigate = useNavigate();
 
@@ -96,7 +108,7 @@ const Landing = () => {
         event.preventDefault();
         setSubmitted(true);
         if (!isValidEmail(email)) {
-            return; // The error handling for invalid email is already being done in LoginForm, so no need to duplicate here.
+            return;
         }
         await signInWithEmailAndPassword(email, password);
     };
@@ -107,10 +119,22 @@ const Landing = () => {
         }
     }, [initializationCompleted, currentUser, navigate]);
 
+    // Function to handle forgot password action
+    const handleForgotPassword = () => {
+        const userEmail = window.prompt('Please enter your email address:');
+        if (userEmail) {
+            resetPassword(userEmail).then(() => {
+                alert('If there is an account associated with that email, a reset link has been sent.');
+            }).catch((error) => {
+                alert('Failed to send reset email. Please try again.');
+            });
+        }
+    };
+
     if (!initializationCompleted || authLoading) {
         return (
-            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
-                <CircularProgress/>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
             </div>
         );
     }
@@ -120,7 +144,7 @@ const Landing = () => {
             <Content>
                 <LoginCard>
                     <CardContent>
-                        <Logo src={logo} alt="Logo"/>
+                        <Logo src={logo} alt="Logo" />
                         <LoginForm
                             email={email}
                             setEmail={setEmail}
@@ -129,7 +153,8 @@ const Landing = () => {
                             handleSubmit={handleSubmit}
                             submitted={submitted}
                             loading={authLoading}
-                            authError={authError} // Pass the error from AuthContext to LoginForm
+                            authError={authError}
+                            onForgotPassword={handleForgotPassword} // Pass the forgot password handler
                         />
                     </CardContent>
                 </LoginCard>

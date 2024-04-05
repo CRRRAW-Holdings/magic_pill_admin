@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React, { createContext, useEffect, useState } from 'react';
 import { firebaseAuth } from '../services/authfirebase';
-import { signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut as firebaseSignOut, sendPasswordResetEmail } from 'firebase/auth';
 import { fetchAdminByEmail } from '../services/api';
 
 const auth = firebaseAuth;
@@ -44,6 +44,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Function to handle password reset
+  const resetPassword = async (email) => {
+    try {
+      setLoading(true);
+      await sendPasswordResetEmail(auth, email);
+      setError(null); // Optionally, set a success message instead of nullifying the error
+    } catch (error) {
+      setError('Failed to send password reset email. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setCurrentUser(user);
@@ -73,6 +86,7 @@ export const AuthProvider = ({ children }) => {
         initializationCompleted,
         signInWithEmailAndPassword: signInWithEmailAndPasswordHandler,
         signOut,
+        resetPassword, // Add this line
       }}>
         {children}
       </AuthContext.Provider>
