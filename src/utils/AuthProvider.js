@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
       const adminDetails = await fetchAdminByEmail(email);
       setCurrentAdmin(adminDetails);
     } catch (error) {
-      setError(error.message);
+      setError('Invalid Email or Password. Please try again.');
     } finally {
       setLoading(false);
     }
