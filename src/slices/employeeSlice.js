@@ -60,15 +60,16 @@ export const uploadCSVThunk = createAsyncThunk(
 
 export const approveEmployeeChangesThunk = createAsyncThunk(
   'employee/approveEmployeeChanges',
-  async ({ approvedData, companyId }, { rejectWithValue }) => {
+  async ({ approvedData, companyId, token }, { rejectWithValue }) => {
     try {
-      const response = await approveEmployeeChanges(approvedData, companyId);
+      const response = await approveEmployeeChanges(approvedData, companyId, token);
       return response;
     } catch (error) {
       return rejectWithValue(error.message);
     }
   }
 );
+
 
 export const resetProcessedCsvData = createAction('employee/resetProcessedCsvData');
 
