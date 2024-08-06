@@ -75,12 +75,17 @@ const readFileContent = (file, onSuccess, onError) => {
   }
 };
 
+const ensurePhoneIsString = (phone) => {
+  if (phone === null || phone === undefined) return '';
+  return String(phone).replace(/[^0-9]/g, '');
+};
+
+
 const validateData = (parsedData) => {
-  for (const record of parsedData) {
-    if (!record.email || !record.dob /* ... other validations */) {
-      throw new ProcessingError('Invalid data: missing required fields.', 'VALIDATION_ERROR');
-    }
-  }
+  return parsedData.map(record => ({
+    ...record,
+    phone: ensurePhoneIsString(record.phone)
+  }));
 };
 
 
@@ -94,8 +99,8 @@ export const processFile = (file, employees, companies, plans, companyId, onSucc
     readFileContent(
       file,
       (parsedData) => {
-        validateData(parsedData);
-        onSuccess(parsedData);
+        const validatedData = validateData(parsedData);
+        onSuccess(validatedData);
       },
       onError
     );

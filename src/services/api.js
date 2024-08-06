@@ -207,7 +207,7 @@ export const fetchPlans = async () => {
 
 export const uploadCSVData = async (companyId, csvData, token) => {
   try {
-    console.log('token', token);
+    console.log(csvData, 'csvData');
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
